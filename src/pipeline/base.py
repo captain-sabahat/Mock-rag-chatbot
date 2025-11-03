@@ -1,0 +1,1 @@
+# Base pipeline class
