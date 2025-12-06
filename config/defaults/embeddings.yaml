@@ -1,0 +1,90 @@
+# ==============================================================================
+# EMBEDDINGS CONFIGURATION
+# ==============================================================================
+#
+# Controls how text is converted to vectors for semantic search.
+#
+# DEVELOPMENT: HuggingFace (free, open-source, no API keys)
+# PRODUCTION: OpenAI (high quality, paid) or alternatives
+#
+# ==============================================================================
+
+# ============================================================================
+# ACTIVE PROVIDER SELECTION
+# ============================================================================
+
+# Which provider: huggingface | openai | cohere
+active_provider: "huggingface"
+
+# ============================================================================
+# HUGGINGFACE CONFIGURATION (Development - ACTIVE)
+# ============================================================================
+#
+# Free, open-source sentence-transformers
+# Model: all-MiniLM-L6-v2 (384-dim, 22MB, fast on CPU)
+#
+
+huggingface:
+  enabled: true
+  model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  dimension: 384
+  device: "cpu"            # "cpu" or "cuda" if GPU available
+  batch_size: 32
+  normalize_embeddings: true
+  cache_folder: "./models/embeddings"
+
+# ============================================================================
+# OPENAI CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# High quality, but requires:
+# - API key
+# - Payment per token
+# - Model: text-embedding-3-small (1536-dim, more accurate)
+#
+
+openai:
+  enabled: false
+  api_key: null  # Set from environment variable
+  model: "text-embedding-3-small"
+  dimension: 1536
+  batch_size: 20
+
+# ============================================================================
+# COHERE CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Alternative provider, requires:
+# - API key
+# - Payment per request
+#
+
+cohere:
+  enabled: false
+  api_key: null  # Set from environment variable
+  model: "embed-english-v3.0"
+  dimension: 1024
+  batch_size: 20
+
+# ============================================================================
+# GLOBAL SETTINGS
+# ============================================================================
+
+cache_enabled: false
+
+# ==============================================================================
+# QUICK SWITCH GUIDE
+# ==============================================================================
+#
+# FOR DEVELOPMENT (HuggingFace - Recommended):
+#   active_provider: "huggingface"
+#   huggingface.enabled: true
+#   openai.enabled: false
+#
+# FOR PRODUCTION (OpenAI - High Quality):
+#   active_provider: "openai"
+#   openai.enabled: true
+#   openai.api_key: "sk-..."  # From env var
+#   huggingface.enabled: false
+#
+# ==============================================================================

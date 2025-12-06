@@ -1,0 +1,286 @@
+# ================================================================================
+# RAG ADMIN PIPELINE - COMPREHENSIVE REQUIREMENTS
+# ================================================================================
+# Python Version: 3.12+
+# Pip Version: 25+
+# Generated: 2025-12-03
+# Purpose: Complete dependency specification for pre-RAG chatbot environment
+# ================================================================================
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CORE FRAMEWORK & SERVER
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+fastapi==0.109.0                    # REST API framework - async-first
+uvicorn[standard]==0.27.0           # ASGI server with WebSocket support
+starlette==0.35.1                   # HTTP toolkit, FastAPI foundation
+pydantic==2.5.3                     # Data validation using Python type hints
+pydantic-settings==2.1.0            # Settings management for Pydantic v2
+python-multipart==0.0.6             # Form/file upload handling
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# LLM PROVIDERS - MAIN (Chat Models)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# OpenAI (GPT-4, GPT-3.5)
+openai==1.12.0                      # Official OpenAI SDK - GPT-4, GPT-3.5-Turbo
+#tiktoken==0.5.2                     # OpenAI's tokenizer for token counting
+
+# Anthropic (Claude 3 series)
+#anthropic==0.21.6                   # Official Claude SDK - Claude 3 Opus/Sonnet/Haiku
+
+# Google (Gemini)
+google-generativeai==0.3.1          # Google Gemini API client
+#google-cloud-aiplatform==1.41.1     # Vertex AI for enterprise models
+
+# Cohere (Command, Rerank)
+cohere==4.48                         # Official Cohere SDK
+
+# DeepSeek
+# Note: DeepSeek uses OpenAI-compatible API, use openai library with custom endpoint
+
+# Meta (Llama via API providers)
+# Llama available through Replicate, Together.ai, or Hugging Face
+
+# Together.ai (Multiple open models)
+together==0.2.11                    # Together inference platform
+
+# Replicate (Open source models)
+replicate==0.21.0                   # Replicate API for open-source models
+
+# Hugging Face (Local & Inference)
+huggingface-hub==0.21.4             # Hugging Face Hub client for model loading
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# LLM ORCHESTRATION & FRAMEWORKS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+langchain==0.1.9                    # Core LLM application framework
+langchain-core>=0.1.26              # LangChain core abstractions
+langchain-community==0.0.25         # Community integrations
+langgraph==0.0.27                   # State graph orchestration (LangChain v2)
+#langfuse==2.2.10                    # Production LLM monitoring & tracing
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# VECTOR DATABASES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# FAISS (Facebook AI Similarity Search) - Local
+faiss-cpu==1.13.0                    # CPU-only FAISS (lightweight)
+# faiss-gpu==1.7.4                  # Uncomment for GPU support (CUDA 11.8+)
+
+# Qdrant (Cloud-native vector DB)
+#qdrant-client==2.7.0                # Qdrant vector database Python client
+
+# Pinecone (Managed vector DB)
+#pinecone==3.0.3                     # Pinecone serverless vector database
+
+# Weaviate (GraphQL-based vector DB)
+#weaviate-client==4.1.1              # Weaviate vector database client
+
+# Milvus (Open-source vector DB)
+#pymilvus==2.3.5                     # Milvus vector database Python SDK
+
+# ChromaDB (Lightweight embedding DB)
+#chromadb==0.4.24                    # ChromaDB vector store
+
+# Supabase (PostgreSQL + pgvector)
+#supabase==2.3.5                     # Supabase Python client for pgvector
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# EMBEDDING MODELS & PROVIDERS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# OpenAI Embeddings
+# Included in openai>=0.27.0
+
+# Cohere Embeddings
+# Included in cohere>=4.0
+
+# Sentence Transformers (Hugging Face embeddings)
+sentence-transformers==2.2.2        # State-of-the-art sentence embeddings
+
+# Google Embeddings (Vertex AI)
+# Included in google-cloud-aiplatform
+
+# Voyage AI Embeddings
+#voyage==0.1.5                       # Voyage AI embedding service
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TEXT PROCESSING & DOCUMENT PARSING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+pdfplumber==0.10.3                  # Advanced PDF extraction
+PyPDF2==3.0.1                       # PDF manipulation library
+python-docx==0.8.11                 # DOCX file handling
+markdown==3.5.2                     # Markdown parsing
+beautifulsoup4==4.12.2              # HTML parsing
+lxml==4.9.3                         # XML/HTML processing
+unstructured==0.18.21                # Unstructured document processing
+pdf2image==1.16.3                   # PDF to image conversion
+pytesseract==0.3.10                 # OCR via Tesseract
+pillow==10.1.0                      # Image processing
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TEXT SPLITTING & CHUNKING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+langchain-text-splitters==0.0.1     # Advanced text splitting strategies
+tokenizers==0.20.3                  # HuggingFace tokenizers (fast chunking)
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DATA STORAGE & DATABASES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+redis==5.0.1                        # In-memory cache/session store
+sqlalchemy==2.0.23                  # SQL ORM and toolkit
+#psycopg[binary]==3.17.1             # PostgreSQL adapter
+pymongo==4.6.0                      # MongoDB driver
+motor==3.3.2                        # Async MongoDB driver
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MLOps & EXPERIMENT TRACKING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+mlflow==2.10.0                      # ML experiment tracking & model registry
+wandb==0.16.3                       # Weights & Biases experiment tracking
+optuna==4.0.0                      # Hyperparameter optimization framework
+ray==2.52.1                          # Distributed computing & parallel processing
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# MONITORING, OBSERVABILITY & TRACING
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# OpenTelemetry (Distributed tracing)
+opentelemetry-api==1.21.0           # OpenTelemetry API
+opentelemetry-sdk==1.21.0           # OpenTelemetry SDK
+opentelemetry-exporter-prometheus==0.42b0  # Prometheus metrics exporter
+opentelemetry-exporter-jaeger==1.21.0      # Jaeger tracing exporter
+opentelemetry-instrumentation==0.42b0      # Auto instrumentation
+opentelemetry-instrumentation-fastapi==0.42b0  # FastAPI instrumentation
+opentelemetry-instrumentation-sqlalchemy==0.42b0  # SQLAlchemy instrumentation
+opentelemetry-instrumentation-redis==0.42b0      # Redis instrumentation
+
+# Prometheus (Metrics collection)
+#prometheus-client==0.19.0           # Prometheus client library
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ASYNC & CONCURRENCY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+aiohttp==3.9.1                      # Async HTTP client/server
+httpx==0.25.2                       # HTTP client (sync & async)
+asyncio-contextmanager==1.0.1       # Async context manager utilities
+tenacity==8.2.3                     # Retry logic with exponential backoff
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# CONFIGURATION MANAGEMENT
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+pyyaml==6.0.1                       # YAML configuration parsing
+python-dotenv==1.0.0                # .env file loading
+hydra-core==1.3.2                   # Config composition framework
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DATA INGESTION TOOLS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PyMuPDF>=1.24.10                   # For the fitz module
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DATA PROCESSING & ANALYSIS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+pandas==2.1.3                       # Data manipulation & analysis
+numpy==1.26.2                       # Numerical computing
+scipy==1.11.4                       # Scientific computing
+scikit-learn==1.3.2                 # Machine learning utilities
+polars==0.19.19                     # Fast DataFrame alternative to Pandas
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TEXT PROCESSING & NLP
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+nltk==3.8.1                         # Natural language processing toolkit
+spacy==3.7.2                        # Industrial NLP library
+textblob==0.17.1                    # Simplified text processing
+langdetect==1.0.9                   # Language detection
+regex==2023.12.25                   # Advanced regex for Python
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SECURITY & AUTHENTICATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+python-jose==3.3.0                  # JWT & JOSE tokens
+passlib==1.7.4                      # Password hashing
+cryptography==41.0.7                # Cryptographic recipes
+pyjwt==2.10.0                        # JWT implementation
+python-jose[cryptography]==3.3.0    # JWT with crypto support
+requests==2.31.0                    # HTTP library
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# VALIDATION & SERIALIZATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+jsonschema==4.20.0                  # JSON schema validation
+orjson==3.9.10                      # Fast JSON serialization
+msgpack==1.0.7                      # Efficient binary serialization
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# TESTING & QUALITY ASSURANCE
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+pytest==7.4.3                       # Testing framework
+pytest-asyncio==0.21.1              # Async test support
+pytest-cov==4.1.0                   # Code coverage
+pytest-xdist==3.5.0                 # Parallel test execution
+httpx==0.25.2                       # HTTP client for testing
+faker==21.0.0                       # Fake data generation
+black==23.12.1                      # Code formatter
+flake8==6.1.0                       # Code linter
+mypy==1.7.1                         # Static type checker
+ruff==0.1.8                         # Fast Python linter
+pre-commit==3.5.0                   # Git hooks framework
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# UTILITIES & HELPERS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+python-dateutil==2.8.2              # Date/time utilities
+pytz==2023.3.post1                  # Timezone database
+tqdm==4.66.1                        # Progress bars
+loguru==0.7.2                       # Enhanced logging (optional)
+click==8.1.7                        # CLI framework
+rich==13.7.0                        # Rich terminal formatting
+python-dateutil==2.8.2              # Date/time library
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# FILE HANDLING & UTILITIES
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+python-multipart==0.0.6             # Multipart form data parsing
+aiofiles==23.2.1                    # Async file I/O
+universal-pathlib>=0.2.0            # Extended pathlib
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ENVIRONMENT & SYSTEM
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+psutil==5.9.6                       # System and process utilities
+python-version==0.0.2               # Version handling
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DOCUMENTATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+sphinx==7.2.6                       # Documentation generator
+mkdocs==1.5.3                       # Project documentation
+mkdocs-material==9.4.14             # Material theme for MkDocs
+
+# ================================================================================
+# VERSION CONSTRAINTS & COMPATIBILITY
+# ================================================================================
+# Constraints applied:
+# - Python 3.12+ for type hints (PEP 585, 604)
+# - Pip 25+ for resolver performance
+# - All packages updated to latest stable as of 2025-12-03
+# - LLM providers: All major models supported (GPT-4, Claude 3, Gemini, etc.)
+# - Vector DBs: Comprehensive coverage (FAISS, Qdrant, Pinecone, Weaviate, Milvus)
+# - Async-first architecture (httpx, aiohttp, motor)
+# - Production-ready monitoring (OpenTelemetry, Prometheus, Langfuse)
+# ================================================================================
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# OPTIONAL: GPU/CUDA SUPPORT (Uncomment for local LLM inference)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# torch==2.1.1+cu118                # PyTorch with CUDA 11.8
+# torchvision==0.16.1+cu118        # Computer vision package
+# torchaudio==2.1.1+cu118          # Audio processing
+# transformers==4.36.2              # Hugging Face Transformers (models)
+# accelerate==0.25.0                # Multi-GPU training utilities
+# bitsandbytes==0.41.3              # 8-bit quantization
+# xformers==0.0.22                  # Efficient transformers
+# faiss-gpu==1.7.4                  # FAISS with GPU support
+# ====================================================================

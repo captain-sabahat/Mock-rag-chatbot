@@ -1,0 +1,125 @@
+# ==============================================================================
+# VECTOR DATABASE CONFIGURATION
+# ==============================================================================
+#
+# Controls where and how embeddings are stored and retrieved.
+#
+# DEVELOPMENT: FAISS (in-memory, CPU, free, fast)
+# PRODUCTION: Qdrant (persistent, scalable) or others
+#
+# ==============================================================================
+
+# ============================================================================
+# ACTIVE PROVIDER SELECTION
+# ============================================================================
+
+# Which provider: faiss | qdrant | pinecone | weaviate | milvus
+active_provider: "faiss"
+
+# Global settings
+timeout_seconds: 30
+
+# ============================================================================
+# FAISS CONFIGURATION (Development - ACTIVE)
+# ============================================================================
+#
+# Fast Approximate Similarity Search Library
+# Perfect for development, prototyping, CPU-based
+#
+# - In-memory (blazingly fast)
+# - CPU-based (no GPU needed)
+# - Free and open-source
+# - Can save/load from disk
+#
+
+faiss:
+  enabled: true
+  index_type: "IVFFlat"        # IVFFlat, HNSW, Flat, etc.
+  metric_type: "L2"            # L2 or IP (inner product)
+  nlist: 100                   # Number of clusters (for IVFFlat)
+  nprobe: 10                   # Clusters to search
+  data_path: "./data/vectordb/faiss_index"
+  save_index: true             # Persist to disk
+  normalize: true              # Normalize embeddings
+
+# ============================================================================
+# QDRANT CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Distributed vector search engine
+# Good for: Production, persistence, clustering
+#
+# Requires: Qdrant server running locally or in cloud
+#
+
+qdrant:
+  enabled: false
+  url: "http://localhost:6333"
+  api_key: null  # Optional, for Qdrant Cloud
+  collection_name: "documents"
+  vector_size: 384
+  distance: "Cosine"
+
+# ============================================================================
+# PINECONE CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Managed vector database (paid service)
+# Good for: Enterprise, serverless, fully managed
+#
+
+pinecone:
+  enabled: false
+  api_key: null  # Required
+  environment: "us-west1-gcp"
+  index_name: "rag-documents"
+  dimension: 384
+
+# ============================================================================
+# WEAVIATE CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Open-source vector database with knowledge graphs
+# Good for: Complex queries, semantic relationships
+#
+
+weaviate:
+  enabled: false
+  url: "http://localhost:8080"
+  api_key: null
+  class_name: "Document"
+
+# ============================================================================
+# MILVUS CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Open-source, scalable vector database
+# Good for: Large-scale deployments, distributed systems
+#
+
+milvus:
+  enabled: false
+  host: "localhost"
+  port: 19530
+  db_name: "default"
+  collection_name: "documents"
+
+# ==============================================================================
+# QUICK SWITCH GUIDE
+# ==============================================================================
+#
+# FOR DEVELOPMENT (FAISS - Recommended):
+#   active_provider: "faiss"
+#   faiss.enabled: true
+#
+# FOR PRODUCTION (Qdrant - Recommended):
+#   active_provider: "qdrant"
+#   qdrant.enabled: true
+#   faiss.enabled: false
+#
+# FOR PRODUCTION (Pinecone - Managed):
+#   active_provider: "pinecone"
+#   pinecone.enabled: true
+#   pinecone.api_key: "pk-..."
+#
+# ==============================================================================

@@ -1,0 +1,105 @@
+# ==============================================================================
+# SESSION STORE CONFIGURATION
+# ==============================================================================
+#
+# Controls how user sessions are stored and retrieved.
+#
+# DEVELOPMENT: SQLite (file-based, no setup needed)
+# PRODUCTION: Redis or MongoDB
+#
+# ==============================================================================
+
+# ============================================================================
+# BACKEND SELECTION
+# ============================================================================
+
+# Which backend to use: sqlite | redis | mongodb | hybrid
+backend: "sqlite"
+
+# Global settings
+operation_timeout_seconds: 600  # 10 minutes
+max_retries: 5
+
+# ============================================================================
+# SQLITE CONFIGURATION (Development - DEFAULT)
+# ============================================================================
+#
+# File-based session storage
+# Perfect for: Development, testing, single-server deployments
+#
+
+sqlite:
+  enabled: true
+  db_path: "./data/sessions/sessions.db"
+  max_connections: 10
+  enable_wal: true      # Write-Ahead Logging (better concurrency)
+  auto_vacuum: true     # Auto-clean
+  journal_mode: "WAL"
+  timeout_seconds: 10
+  check_same_thread: false  # Allow multi-threaded access
+
+# ============================================================================
+# REDIS CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# In-memory cache with optional persistence
+# Requires: Redis server running
+# Good for: Production, high performance, distributed systems
+#
+
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null  # Set if Redis requires password
+  use_tls: false
+  max_connections: 50
+  timeout_seconds: 30
+  socket_keepalive: true
+  session_ttl_seconds: 604800  # 7 days
+
+# ============================================================================
+# MONGODB CONFIGURATION (Production - DISABLED)
+# ============================================================================
+#
+# Distributed, persistent storage
+# Requires: MongoDB server running
+# Good for: Production, distributed deployments, complex queries
+#
+
+mongodb:
+  enabled: false
+  uri: "mongodb://localhost:27017"
+  database: "rag_pipeline"
+  collection: "sessions"
+  username: null
+  password: null
+  max_pool_size: 50
+  min_pool_size: 10
+
+# ==============================================================================
+# QUICK SWITCH GUIDE
+# ==============================================================================
+#
+# FOR DEVELOPMENT:
+#   backend: "sqlite"
+#   sqlite.enabled: true
+#   redis.enabled: false
+#
+# FOR PRODUCTION (Redis):
+#   backend: "redis"
+#   redis.enabled: true
+#   sqlite.enabled: false
+#
+# FOR PRODUCTION (MongoDB):
+#   backend: "mongodb"
+#   mongodb.enabled: true
+#   sqlite.enabled: false
+#
+# FOR HYBRID (SQLite + Redis):
+#   backend: "hybrid"
+#   sqlite.enabled: true
+#   redis.enabled: true
+#
+# ==============================================================================

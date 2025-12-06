@@ -1,0 +1,142 @@
+################################################################################
+# CHUNKER CONFIGURATION - Text chunking strategies for document segmentation
+################################################################################
+
+# FILE PURPOSE:
+# ===============
+# Configures text chunking strategies used in the chunking_node.
+# Chunking determines how documents are split into embedable pieces.
+# Different strategies optimize for different use cases:
+#   - recursive: Good general-purpose chunking (default)
+#   - token: Respects token limits exactly (for LLMs with strict limits)
+#   - semantic: Groups similar content (more expensive, better quality)
+
+# ROLE IN PIPELINE:
+# ==================
+# After preprocessing, the raw text is chunked using the strategy here.
+# Chunks are then embedded and stored in vector DB.
+# Config changes here affect:
+#   - Number of embeddings generated (cost)
+#   - Overlap between chunks (retrieval quality)
+#   - Processing time (throughput)
+
+# INPUTS (FROM PIPELINE):
+# ========================
+# • preprocessed text from preprocessing_node
+# • token count (for token-based chunking)
+# • semantic embeddings (for semantic chunking - optional)
+
+# OUTPUTS:
+# =========
+# • chunks: List of text segments, each <chunk_size tokens
+# • chunk_metadata: Start position, token count, overlap markers
+
+# CIRCUIT BREAK NOTE:
+# ====================
+# If chunk_size is too small (e.g., <10 tokens):
+#   - Will generate many embeddings (cost explosion)
+#   - May cause embedding API rate limits -> chunking_node retry loops
+# If chunk_size too large (e.g., >8000):
+#   - Embeddings may fail (truncation or model limits)
+#   - VectorDB upsert may fail (oversized vectors)
+# If overlap is invalid (overlap >= chunk_size):
+#   - Infinite loop or memory exhaustion possible
+
+# SCALABILITY NOTES:
+# ===================
+# • docker: Chunking is CPU-bound; can scale horizontally
+# • k8s: Chunking node can be replicated if documents are large
+# • resource: Large chunk_size = fewer embeddings = less GPU/LLM calls
+# • token_aware: Respecting token limits prevents embedding failures
+
+# RESOURCE OPTIMIZATION:
+# =======================
+# • Larger chunk_size = fewer embeddings = lower API cost
+# • But larger chunks may be too general for retrieval
+# • Overlap wastes tokens but improves retrieval (retrieve adjacent chunks together)
+# • Token-based chunking is most accurate but slower than char-based
+
+chunking:
+  # Strategy to use: "recursive", "token", or "semantic"
+  strategy: "recursive"
+  
+  # Recursive chunking - good balance of quality and performance
+  recursive:
+    # Maximum characters per chunk
+    # WARNING: Changing this affects number of embeddings; scale resources accordingly
+    # RESOURCE: Smaller = more embeddings = more cost
+    chunk_size: 512
+    
+    # Characters of overlap between chunks for retrieval context
+    # RESOURCE: Larger overlap = higher embedding count (and cost)
+    # QUALITY: Some overlap improves retrieval (adjacent chunks together)
+    overlap: 50
+    
+    # Hierarchy of separators tried in order for splitting
+    # Tries to split on sentence first, then line, then word
+    # IMPORTANT: Do not remove separators unless you want chunking to fail
+    separators:
+      - "\n\n"     # Paragraph break
+      - "\n"       # Line break
+      - " "        # Word boundary
+      - ""         # Character (fallback)
+    
+    # Respect sentence boundaries? Prevents orphaned mid-sentence chunks
+    respect_sentences: true
+    
+    # Maximum chunk wait time (seconds) before timeout
+    # RESOURCE: Longer timeout = higher memory use for large documents
+    timeout_seconds: 30
+  
+  # Token-based chunking - respects LLM token limits exactly
+  token:
+    # Maximum tokens per chunk (for embedding models)
+    # IMPORTANT: Must be <= embedding model's max token length
+    # CIRCUIT BREAK: If max_tokens > model limit, embedding fails
+    max_tokens: 512
+    
+    # Token overlap between chunks
+    overlap_tokens: 50
+    
+    # Encoding to use for token counting (depends on LLM)
+    # "cl100k_base" for OpenAI models
+    encoding: "cl100k_base"
+    
+    # Timeout for token counting (can be slow for large documents)
+    # RESOURCE: Longer timeout = slower chunking
+    timeout_seconds: 60
+  
+  # Semantic chunking - groups semantically similar content
+  # (Note: requires embeddings, more expensive; consider for future)
+  semantic:
+    # Distance threshold for grouping chunks (0-1, cosine similarity)
+    # Lower = more aggressive grouping (fewer, larger chunks)
+    similarity_threshold: 0.8
+    
+    # Fallback to recursive chunking if semantic model unavailable
+    fallback_strategy: "recursive"
+    
+    # Timeout for semantic clustering
+    timeout_seconds: 120
+
+# DEFAULT BEHAVIOR:
+# Currently uses recursive chunking (good balance)
+# Token-aware: respects 512 token limit
+# Overlap: 50 chars for context (adjustable per use case)
+
+# FUTURE WORK:
+# =============
+# • Add dynamic chunk_size based on document type
+# • Support multiple chunking strategies in parallel (experiment)
+# • Add semantic re-ranking of chunks for retrieval quality
+# • mlflow: log_metric("chunks_generated", chunk_count)
+# • mlflow: log_metric("avg_chunk_size_tokens", avg_tokens_per_chunk)
+# • monitoring: Alert if chunks_generated > threshold (cost control)
+# • k8s: Can scale chunking workers separately if bottleneck
+
+# TOKEN AWARENESS:
+# =================
+# Chunk size and overlap directly affect token usage:
+#   - 512 token chunks = ~2000 chars (varies by language)
+#   - 50 token overlap = ~200 char duplication
+# Cumulative effect: If 1000 chunks, embedding cost is (1000 * 512) / 1000 = 512 tokens on avg
