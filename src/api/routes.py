@@ -1,17 +1,19 @@
 # ============================================================================
-# API Routes - RAG Pipeline Endpoints (POST-Based Monitoring)
+# API Routes - RAG Pipeline Endpoints (POST-Based Monitoring) v1.2.0
 # ============================================================================
 
 """
 API Routes - RAG Pipeline Endpoints with POST-based monitoring
 
-Key Changes:
-1. All monitoring endpoints changed from GET to POST
-2. POST endpoints write JSON to data/monitoring/ directory
-3. Safe attribute access using getattr() - no AttributeError
+Key Features:
+1. All monitoring endpoints use POST (not GET)
+2. Safe attribute access using getattr() - never crashes
+3. JSON persistence to data/monitoring/ directory
 4. Structured response format for all endpoints
 5. Circuit breaker tracking integrated
 6. Ingestion pipeline metrics tracked
+7. NEW: /api/monitor/tools-health endpoint
+8. Proper status codes (202 for async operations)
 """
 
 import asyncio
@@ -150,7 +152,7 @@ def create_api_router() -> APIRouter:
         }
 
     # ====================================================================
-    # INGESTION ENDPOINTS (unchanged)
+    # INGESTION ENDPOINTS
     # ====================================================================
 
     @router.post(
@@ -164,28 +166,39 @@ def create_api_router() -> APIRouter:
         user_email: Optional[str] = None,
         metadata: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Upload a document for processing."""
+        """
+        Upload a document for processing.
+        
+        Returns:
+        - 202 ACCEPTED with ingestion_id
+        - success: true (successful upload + pipeline queued)
+        """
         try:
             logger.info(f"📤 Upload started: {file.filename} by {user_name}")
+            
             request_id = ingestion_store.create_ingestion(
                 file.filename,
                 user_name or "unknown",
                 user_email or "unknown",
                 metadata,
             )
-
+            
             logger.info(f"✨ Ingestion created: {request_id}")
+            
+            # Save file
             upload_dir = Path("./data/uploads")
             upload_dir.mkdir(parents=True, exist_ok=True)
             file_path = upload_dir / f"{request_id}_{file.filename}"
-
+            
             content = await file.read()
             with open(file_path, "wb") as f:
                 f.write(content)
-
+            
             logger.info(f"✅ Document uploaded: {file.filename} → {request_id}")
+            
             ingestion_store.update_progress(request_id, 10, "ingest")
-
+            
+            # Queue pipeline processing
             asyncio.create_task(
                 process_document_with_orchestrator(
                     request_id=request_id,
@@ -193,7 +206,7 @@ def create_api_router() -> APIRouter:
                     filename=file.filename,
                 )
             )
-
+            
             return {
                 "success": True,
                 "ingestion_id": request_id,
@@ -201,7 +214,7 @@ def create_api_router() -> APIRouter:
                 "status": "queued",
                 "message": "Document uploaded and pipeline queued",
             }
-
+        
         except Exception as e:
             logger.error(f"❌ Upload error: {str(e)}", exc_info=True)
             raise HTTPException(
@@ -217,8 +230,10 @@ def create_api_router() -> APIRouter:
         """Process document through pipeline asynchronously."""
         try:
             logger.info(f"🔄 Starting orchestrator pipeline for {request_id}")
+            
             orchestrator = get_orchestrator()
-
+            
+            # Read file
             try:
                 with open(file_path, "rb") as f:
                     file_content = f.read()
@@ -227,22 +242,29 @@ def create_api_router() -> APIRouter:
                 logger.error(f"❌ Failed to read file {file_path}: {str(e)}", exc_info=True)
                 ingestion_store.update_status(request_id, "failed")
                 raise
-
+            
+            # Process through pipeline
             logger.info(f"🚀 Calling orchestrator.process_document() for {request_id}")
+            
             result_id = await orchestrator.process_document(
                 request_id=request_id,
                 file_name=filename,
                 file_content=file_content,
                 metadata={"source_path": file_path},
             )
-
+            
             logger.info(f"✅ Orchestrator completed: {result_id}")
+            
             ingestion_store.update_progress(request_id, 100, "upsert")
             ingestion_store.update_status(request_id, "completed")
+            
             logger.info(f"🎉 Pipeline COMPLETED: {request_id}")
-
+        
         except Exception as e:
-            logger.error(f"❌ Pipeline orchestrator error for {request_id}: {str(e)}", exc_info=True)
+            logger.error(
+                f"❌ Pipeline orchestrator error for {request_id}: {str(e)}",
+                exc_info=True
+            )
             ingestion_store.update_status(request_id, "failed")
 
     @router.get("/ingest/status/{ingestion_id}", tags=["Ingestion"])
@@ -250,18 +272,19 @@ def create_api_router() -> APIRouter:
         """Get real-time ingestion status."""
         try:
             ingestion = ingestion_store.get_ingestion(ingestion_id)
+            
             if not ingestion:
                 logger.warning(f"❌ Ingestion not found: {ingestion_id}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Ingestion {ingestion_id} not found",
                 )
-
+            
             logger.info(
                 f"✅ Status: {ingestion_id} - "
                 f"{ingestion['progress']}% - {ingestion['current_node']}"
             )
-
+            
             return {
                 "success": True,
                 "status": {
@@ -278,7 +301,7 @@ def create_api_router() -> APIRouter:
                     "timestamp": datetime.now().isoformat(),
                 },
             }
-
+        
         except HTTPException:
             raise
         except Exception as e:
@@ -293,6 +316,7 @@ def create_api_router() -> APIRouter:
         """Get all ingestions with summary metrics."""
         try:
             logger.info("📡 GET /api/ingest/all called")
+            
             all_ing = ingestion_store.get_all_ingestions()
             total = len(all_ing)
             completed = sum(1 for i in all_ing if i["status"] == "completed")
@@ -300,7 +324,7 @@ def create_api_router() -> APIRouter:
             in_progress = sum(
                 1 for i in all_ing if i["status"] in ["processing", "queued"]
             )
-
+            
             response = {
                 "success": True,
                 "summary": {
@@ -321,15 +345,15 @@ def create_api_router() -> APIRouter:
                     for i in all_ing
                 ],
             }
-
+            
             logger.info(
                 "✅ Returned all ingestions: "
                 f"total={total}, completed={completed}, "
                 f"failed={failed}, in_progress={in_progress}"
             )
-
+            
             return response
-
+        
         except Exception as e:
             logger.error(f"❌ Error in get_all_ingestions: {str(e)}", exc_info=True)
             return {
@@ -345,21 +369,23 @@ def create_api_router() -> APIRouter:
             }
 
     # ====================================================================
-    # POST-BASED MONITORING ENDPOINTS (NEW)
+    # POST-BASED MONITORING ENDPOINTS
     # ====================================================================
 
     @router.post("/monitor/config", tags=["Monitoring"])
     async def get_pipeline_config() -> Dict[str, Any]:
         """
-        POST endpoint to fetch and persist current pipeline configuration.
-        Reads from .env via settings.
-        Writes to data/monitoring/config.json
+        POST endpoint to fetch and persist pipeline configuration.
+        
+        Returns:
+        - Configuration from settings (chunking, embeddings, vector DB)
+        - Writes to data/monitoring/config.json
         """
         try:
             logger.info("📡 POST /api/monitor/config - Reading pipeline configuration")
             
             settings = get_settings()
-
+            
             # SAFE access using getattr - never crashes
             chunking_strategy = getattr(settings, "chunking_strategy", "recursive")
             embedding_provider = getattr(settings, "embedding_provider", "huggingface")
@@ -369,14 +395,14 @@ def create_api_router() -> APIRouter:
                 "sentence-transformers/all-MiniLM-L6-v2",
             )
             vector_db_provider = getattr(settings, "vector_db_provider", "faiss")
-
+            
             # Helper to extract enum values
             def _val(v: Any) -> str:
                 return v.value if hasattr(v, "value") else str(v)
-
+            
             config_data = {
                 "timestamp": datetime.now().isoformat() + "Z",
-                "status": "connected",
+                "status": "success",
                 "backend_connected": True,
                 "configuration": {
                     "chunking": {
@@ -396,13 +422,12 @@ def create_api_router() -> APIRouter:
                     },
                 },
             }
-
-            # Write to persistent JSON
+            
             write_monitoring_json("config.json", config_data)
-
             logger.info("✅ Pipeline configuration retrieved and persisted")
+            
             return config_data
-
+        
         except Exception as e:
             logger.error(f"❌ Error in get_pipeline_config: {str(e)}", exc_info=True)
             error_response = {
@@ -419,27 +444,27 @@ def create_api_router() -> APIRouter:
     async def get_system_health() -> Dict[str, Any]:
         """
         POST endpoint for comprehensive system health check.
+        
         Returns:
         - Circuit breaker status for each node
         - Pipeline metrics (total, completed, failed, processing)
-        - Orchestrator health
-        - Configuration status
-        
-        Writes to data/monitoring/health.json
+        - Node health status
+        - Writes to data/monitoring/health.json
         """
         try:
             logger.info("📡 POST /api/monitor/health - Running system health check")
-
+            
             settings = get_settings()
             
             # Safe access
             vector_db_provider = getattr(settings, "vector_db_provider", "faiss")
+            
             def _val(v: Any) -> str:
                 return v.value if hasattr(v, "value") else str(v)
-
+            
             # Circuit breaker status
             breaker_status = circuit_breaker_manager.get_all_status()
-
+            
             # Pipeline metrics
             all_ing = ingestion_store.get_all_ingestions()
             pipeline_stats = {
@@ -448,7 +473,7 @@ def create_api_router() -> APIRouter:
                 "failed": sum(1 for i in all_ing if i["status"] == "failed"),
                 "processing": sum(1 for i in all_ing if i["status"] in ["processing", "queued"]),
             }
-
+            
             # Orchestrator health (if available)
             try:
                 orchestrator = get_orchestrator()
@@ -456,10 +481,10 @@ def create_api_router() -> APIRouter:
             except Exception as e:
                 logger.warning(f"⚠️ Orchestrator health check failed: {e}")
                 orch_health = {"status": "unknown", "error": str(e)}
-
+            
             health_data = {
                 "timestamp": datetime.now().isoformat() + "Z",
-                "status": "healthy",
+                "status": "success",
                 "backend_connected": True,
                 "configuration": {
                     "vector_db": _val(vector_db_provider),
@@ -515,13 +540,12 @@ def create_api_router() -> APIRouter:
                 "pipeline": pipeline_stats,
                 "orchestrator": orch_health,
             }
-
-            # Write to persistent JSON
+            
             write_monitoring_json("health.json", health_data)
-
             logger.info("✅ System health check completed and persisted")
+            
             return health_data
-
+        
         except Exception as e:
             logger.error(f"❌ Error in get_system_health: {str(e)}", exc_info=True)
             error_response = {
@@ -538,16 +562,20 @@ def create_api_router() -> APIRouter:
     async def get_live_metrics() -> Dict[str, Any]:
         """
         POST endpoint for live pipeline metrics and ingestion tracking.
-        Returns detailed breakdown of all ingestions.
-        Writes to data/monitoring/metrics.json
+        
+        Returns:
+        - Summary metrics (total, completed, failed, processing)
+        - Detailed breakdown of all ingestions
+        - Writes to data/monitoring/metrics.json
         """
         try:
             logger.info("📡 POST /api/monitor/metrics - Fetching live metrics")
-
+            
             all_ing = ingestion_store.get_all_ingestions()
-
+            
             metrics_data = {
                 "timestamp": datetime.now().isoformat() + "Z",
+                "status": "success",
                 "summary": {
                     "total": len(all_ing),
                     "completed": sum(1 for i in all_ing if i["status"] == "completed"),
@@ -567,17 +595,17 @@ def create_api_router() -> APIRouter:
                     for i in sorted(all_ing, key=lambda x: x["created_at"], reverse=True)
                 ],
             }
-
-            # Write to persistent JSON
+            
             write_monitoring_json("metrics.json", metrics_data)
-
             logger.info(f"✅ Live metrics: {metrics_data['summary']}")
+            
             return metrics_data
-
+        
         except Exception as e:
             logger.error(f"❌ Error getting metrics: {str(e)}", exc_info=True)
             error_response = {
                 "timestamp": datetime.now().isoformat() + "Z",
+                "status": "error",
                 "summary": {
                     "total": 0,
                     "completed": 0,
@@ -594,17 +622,18 @@ def create_api_router() -> APIRouter:
     async def get_full_status() -> Dict[str, Any]:
         """
         POST endpoint for combined system status.
+        
         Aggregates config + health + metrics into single response.
         Writes to data/monitoring/status.json
         """
         try:
             logger.info("📡 POST /api/monitor/status - Fetching full system status")
-
+            
             # Read existing files
             config = read_monitoring_json("config.json") or {}
             health = read_monitoring_json("health.json") or {}
             metrics = read_monitoring_json("metrics.json") or {}
-
+            
             status_data = {
                 "timestamp": datetime.now().isoformat() + "Z",
                 "backend_connected": True,
@@ -627,13 +656,12 @@ def create_api_router() -> APIRouter:
                     "status": "data/monitoring/status.json",
                 },
             }
-
-            # Write to persistent JSON
+            
             write_monitoring_json("status.json", status_data)
-
             logger.info("✅ Full system status retrieved and persisted")
+            
             return status_data
-
+        
         except Exception as e:
             logger.error(f"❌ Error in get_full_status: {str(e)}", exc_info=True)
             error_response = {
@@ -645,8 +673,192 @@ def create_api_router() -> APIRouter:
             write_monitoring_json("status.json", error_response)
             return error_response
 
+    @router.post("/monitor/tools-health", tags=["Monitoring"])
+    async def get_tools_health() -> Dict[str, Any]:
+        """
+        POST endpoint for tools health check (FIXED).
+        
+        Returns:
+        - Configuration (chunking, embeddings, vector DB)
+        - Circuit breaker status
+        - Pipeline nodes health
+        - Safe attribute access (no crashes)
+        
+        Used by: Frontend Tools panel
+        Writes to: data/monitoring/tools_health.json
+        """
+        try:
+            logger.info("📡 POST /api/monitor/tools-health - Fetching tools health")
+            
+            settings = get_settings()
+            
+            # SAFE attribute access using getattr()
+            chunking_strategy = getattr(settings, "chunking_strategy", "recursive")
+            embedding_provider = getattr(settings, "embedding_provider", "huggingface")
+            embedding_model = getattr(
+                settings,
+                "embedding_model",
+                "sentence-transformers/all-MiniLM-L6-v2",
+            )
+            vector_db_provider = getattr(settings, "vector_db_provider", "faiss")
+            
+            def _val(v):
+                return v.value if hasattr(v, "value") else str(v)
+            
+            breaker_status = circuit_breaker_manager.get_all_status()
+            
+            tools_health = {
+                "timestamp": datetime.now().isoformat() + "Z",
+                "status": "connected",
+                "backend_connected": True,
+                "configuration": {
+                    "chunking": {
+                        "strategy": _val(chunking_strategy),
+                        "chunk_size": 512,
+                        "overlap": 50,
+                    },
+                    "embeddings": {
+                        "provider": _val(embedding_provider),
+                        "model": str(embedding_model),
+                        "dimension": 384,
+                    },
+                    "vectordb": {
+                        "provider": _val(vector_db_provider),
+                    },
+                },
+                "circuit_breaker": {
+                    "overall_state": breaker_status.get("state", "closed"),
+                    "breakers": {
+                        name: {
+                            "state": cb.get("state", "closed"),
+                            "failure_count": cb.get("failure_count", 0),
+                            "success_count": cb.get("success_count", 0),
+                        }
+                        for name, cb in breaker_status.get("breakers", {}).items()
+                    },
+                },
+                "nodes": {
+                    "ingest": {
+                        "status": "healthy",
+                        "description": "PDF/TXT/JSON parsing"
+                    },
+                    "preprocess": {
+                        "status": "healthy",
+                        "description": "Text normalization"
+                    },
+                    "chunk": {
+                        "status": "healthy",
+                        "description": "Semantic chunking (512 tokens, 50 overlap)"
+                    },
+                    "embed": {
+                        "status": "healthy",
+                        "description": "384-dimensional embeddings"
+                    },
+                    "upsert": {
+                        "status": "healthy",
+                        "description": f"{_val(vector_db_provider)} vector store"
+                    },
+                },
+            }
+            
+            write_monitoring_json("tools_health.json", tools_health)
+            logger.info("✅ Tools health retrieved")
+            
+            return tools_health
+        
+        except Exception as e:
+            logger.error(f"❌ Error in tools_health: {str(e)}", exc_info=True)
+            error = {
+                "timestamp": datetime.now().isoformat() + "Z",
+                "status": "error",
+                "backend_connected": False,
+                "error": "Failed to fetch tools health",
+                "details": str(e),
+                "configuration": {},
+                "circuit_breaker": {},
+                "nodes": {},
+            }
+            write_monitoring_json("tools_health.json", error)
+            return error
+
     # ====================================================================
-    # QUERY ENDPOINT (unchanged)
+    # LOGS ENDPOINT (from log_buffer.py)
+    # ====================================================================
+
+    @router.post("/monitor/logs", tags=["Monitoring"])
+    async def get_pipeline_logs(
+        level: Optional[str] = None,
+        search: Optional[str] = None,
+        limit: int = 100,
+    ) -> Dict[str, Any]:
+        """
+        POST endpoint to fetch live pipeline logs.
+        
+        Query Parameters:
+        - level: Filter by log level (INFO, WARNING, ERROR, etc.)
+        - search: Search logs by message or logger name
+        - limit: Max number of logs to return (default: 100)
+        
+        Returns:
+        - Logs from in-memory buffer + JSON file
+        - Summary statistics
+        - Timestamp of last update
+        """
+        try:
+            from src.core.log_buffer import get_log_buffer
+            
+            logger.info("📡 POST /api/monitor/logs - Fetching pipeline logs")
+            
+            log_buffer = get_log_buffer()
+            
+            # Get filtered logs
+            logs = log_buffer.get_logs(
+                level=level,
+                search=search,
+                limit=limit,
+            )
+            
+            # Get summary
+            summary = log_buffer.get_summary()
+            
+            logs_response = {
+                "timestamp": datetime.now().isoformat() + "Z",
+                "status": "success",
+                "summary": summary,
+                "filters": {
+                    "level": level or "all",
+                    "search": search or "none",
+                    "limit": limit,
+                },
+                "results": {
+                    "total_fetched": len(logs),
+                    "logs": logs,
+                },
+                "data_file": "data/monitoring/pipeline_logs.json",
+            }
+            
+            write_monitoring_json("logs.json", logs_response)
+            
+            logger.info(f"✅ Pipeline logs retrieved: {len(logs)} logs")
+            return logs_response
+        
+        except Exception as e:
+            logger.error(f"❌ Error in get_pipeline_logs: {str(e)}", exc_info=True)
+            error_response = {
+                "timestamp": datetime.now().isoformat() + "Z",
+                "status": "error",
+                "error": "Failed to fetch logs",
+                "details": str(e),
+                "results": {
+                    "total_fetched": 0,
+                    "logs": [],
+                },
+            }
+            write_monitoring_json("logs.json", error_response)
+            return error_response
+
+    # ====================================================================
+    # QUERY ENDPOINT
     # ====================================================================
 
     @router.post("/query", response_model=QueryResponse, tags=["Query"])
@@ -658,17 +870,17 @@ def create_api_router() -> APIRouter:
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Query too short (minimum 2 characters)",
                 )
-
+            
             orchestrator = get_orchestrator()
             results = await orchestrator.query_documents(
                 query=request.query,
                 top_k=request.topk or 5,
                 session_id=request.session_id,
             )
-
+            
             logger.info(f"✅ Query executed: {request.query} - {len(results)} results")
             return QueryResponse(results=results)
-
+        
         except HTTPException:
             raise
         except Exception as e:

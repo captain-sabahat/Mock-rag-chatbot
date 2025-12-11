@@ -110,10 +110,12 @@ sentence-transformers==2.2.2        # State-of-the-art sentence embeddings
 pdfplumber==0.10.3                  # Advanced PDF extraction
 PyPDF2==3.0.1                       # PDF manipulation library
 python-docx==0.8.11                 # DOCX file handling
+python-pptx==0.6.21                 # PowerPoint support
+python-magic-bin==0.4.14            # File type detection
 markdown==3.5.2                     # Markdown parsing
 beautifulsoup4==4.12.2              # HTML parsing
 lxml==4.9.3                         # XML/HTML processing
-unstructured==0.18.21                # Unstructured document processing
+unstructured==0.18.21               # Unstructured document processing
 pdf2image==1.16.3                   # PDF to image conversion
 pytesseract==0.3.10                 # OCR via Tesseract
 pillow==10.1.0                      # Image processing
