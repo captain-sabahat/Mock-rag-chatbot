@@ -1,6 +1,6 @@
 """
 ================================================================================
-BASE TOOL - Abstract Base Class for All Tools
+BASE TOOL - Abstract Base Class for All Tools with Monitoring Hooks
 ================================================================================
 
 PURPOSE:
@@ -8,10 +8,12 @@ PURPOSE:
 Define the interface that all tool implementations must follow.
 
 This enforces consistency across:
-  - Chunkers (RecursiveChunker, SlidingWindowChunker, etc.)
-  - Embedders (OpenAIEmbedder, BGEEmbedder, etc.)
-  - VectorDB clients (QdrantClient, FAISSClient, etc.)
-  - Preprocessors (TextCleaner, LanguageDetector, etc.)
+- Chunkers (RecursiveChunker, SlidingWindowChunker, etc.)
+- Embedders (OpenAIEmbedder, BGEEmbedder, etc.)
+- VectorDB clients (QdrantClient, FAISSClient, etc.)
+- Preprocessors (TextCleaner, LanguageDetector, etc.)
+
+Adds optional hooks for emitting NodeStatus / error reporting.
 
 BENEFITS:
 ---------
@@ -20,24 +22,33 @@ BENEFITS:
 ✅ Easy to mock for testing
 ✅ Clear contract for developers
 ✅ Config-driven tool selection
+✅ Built-in error reporting (OPTIONAL)
 
 USAGE:
 ------
-    class MyChunker(BaseTool):
-        async def execute(self, **kwargs):
-            # Your implementation
-            pass
+class MyChunker(BaseTool):
+    async def execute(self, **kwargs):
+        # Your implementation
+        pass
+    
+    async def report_to_orchestrator(self, status_info):
+        # Optional: Report status to orchestrator
+        pass
 
 ================================================================================
 """
 
 from abc import ABC, abstractmethod
 from pydantic import BaseModel, Field
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Callable
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+# ================================================================================
+# TOOL CONFIGURATION
+# ================================================================================
 
 class ToolConfig(BaseModel):
     """Base configuration for all tools."""
@@ -51,6 +62,9 @@ class ToolConfig(BaseModel):
     class Config:
         extra = "allow"  # Allow additional fields
 
+# ================================================================================
+# BASE TOOL CLASS
+# ================================================================================
 
 class BaseTool(ABC):
     """
@@ -59,7 +73,7 @@ class BaseTool(ABC):
     All tools (chunkers, embedders, vectordb clients, etc.)
     must inherit from this and implement execute().
     """
-
+    
     def __init__(self, config: ToolConfig):
         """
         Initialize tool with configuration.
@@ -74,12 +88,15 @@ class BaseTool(ABC):
         self.timeout = config.timeout_seconds
         self.retry_count = config.retry_count
         
+        # Optional: For reporting to orchestrator
+        self.orchestrator_callback: Optional[Callable] = None
+        
         logger.info(f"🔧 Initialized {self.tool_type} tool: {self.tool_name}")
-
+    
     # ========================================================================
     # ABSTRACT METHOD - MUST BE IMPLEMENTED
     # ========================================================================
-
+    
     @abstractmethod
     async def execute(self, **kwargs) -> Dict[str, Any]:
         """
@@ -89,14 +106,14 @@ class BaseTool(ABC):
         
         Args:
             **kwargs: Tool-specific parameters
-            
+        
         Returns:
             Dict with execution results
-            
+        
         Raises:
             ProcessingError: If execution fails
             ValidationError: If inputs invalid
-            
+        
         Example:
             # Chunker
             result = await chunker.execute(
@@ -119,47 +136,93 @@ class BaseTool(ABC):
             )
         """
         pass
-
+    
     # ========================================================================
     # OPTIONAL: LIFECYCLE HOOKS
     # ========================================================================
-
+    
     async def setup(self) -> None:
         """
         Setup hook called before first use.
         
         Override if your tool needs:
-          - Load models
-          - Initialize connections
-          - Create resources
-          
+        - Load models
+        - Initialize connections
+        - Create resources
+        
         Example:
             async def setup(self):
                 self.model = await load_model(self.config.model_name)
                 self.client = redis.Redis(...)
         """
         pass
-
+    
     async def cleanup(self) -> None:
         """
         Cleanup hook called on shutdown.
         
         Override if your tool needs:
-          - Close connections
-          - Release resources
-          - Save state
-          
+        - Close connections
+        - Release resources
+        - Save state
+        
         Example:
             async def cleanup(self):
                 await self.client.close()
                 self.model.unload()
         """
         pass
-
+    
+    # ========================================================================
+    # OPTIONAL: MONITORING & REPORTING HOOKS
+    # ========================================================================
+    
+    async def report_to_orchestrator(self, status_info: Dict[str, Any]) -> None:
+        """
+        Report status to orchestrator (OPTIONAL).
+        
+        Subclasses can override to report:
+        - Execution status
+        - Performance metrics
+        - Errors and warnings
+        - Circuit breaker info
+        
+        Args:
+            status_info: Dict with status information
+        
+        Example:
+            async def report_to_orchestrator(self, status_info):
+                if self.orchestrator_callback:
+                    await self.orchestrator_callback({
+                        "tool_name": self.tool_name,
+                        "status": status_info.get("status"),
+                        "execution_time_ms": status_info.get("execution_time_ms"),
+                        "exception": status_info.get("exception"),
+                        "exception_severity": status_info.get("exception_severity")
+                    })
+        """
+        if self.orchestrator_callback:
+            try:
+                await self.orchestrator_callback(status_info)
+            except Exception as e:
+                logger.warning(f"Failed to report to orchestrator: {str(e)}")
+    
+    def set_orchestrator_callback(self, callback: Callable) -> None:
+        """
+        Set callback for reporting to orchestrator.
+        
+        Args:
+            callback: Async function to call with status
+        
+        Usage:
+            tool.set_orchestrator_callback(orchestrator.record_tool_status)
+        """
+        self.orchestrator_callback = callback
+    
     # ========================================================================
     # OPTIONAL: VALIDATION
     # ========================================================================
-
+    
     def validate_input(self, **kwargs) -> bool:
         """
         Validate input parameters before execution.
@@ -168,13 +231,13 @@ class BaseTool(ABC):
         
         Args:
             **kwargs: Parameters to validate
-            
+        
         Returns:
             bool: True if valid
-            
+        
         Raises:
             ValidationError: If invalid
-            
+        
         Example:
             def validate_input(self, **kwargs):
                 if 'text' not in kwargs:
@@ -184,11 +247,11 @@ class BaseTool(ABC):
                 return True
         """
         return True
-
+    
     # ========================================================================
     # HELPER METHODS (Common functionality)
     # ========================================================================
-
+    
     async def execute_with_retry(self, **kwargs) -> Dict[str, Any]:
         """
         Execute with automatic retry on failure.
@@ -197,10 +260,10 @@ class BaseTool(ABC):
         
         Args:
             **kwargs: Parameters for execute()
-            
+        
         Returns:
             Execution result
-            
+        
         Raises:
             Last exception if all retries exhausted
         """
@@ -212,7 +275,7 @@ class BaseTool(ABC):
             try:
                 logger.debug(f"Execution attempt {attempt + 1}/{self.retry_count + 1}")
                 return await self.execute(**kwargs)
-                
+            
             except Exception as e:
                 last_error = e
                 logger.warning(
@@ -230,7 +293,7 @@ class BaseTool(ABC):
             f"Tool execution failed after {self.retry_count + 1} attempts. "
             f"Last error: {str(last_error)}"
         )
-
+    
     def get_info(self) -> Dict[str, Any]:
         """
         Get information about this tool.
@@ -245,11 +308,11 @@ class BaseTool(ABC):
             "timeout": self.timeout,
             "retry_count": self.retry_count,
         }
-
+    
     def is_enabled(self) -> bool:
         """Check if tool is enabled."""
         return self.enabled
-
+    
     async def health_check(self) -> bool:
         """
         Check if tool is healthy and ready to use.

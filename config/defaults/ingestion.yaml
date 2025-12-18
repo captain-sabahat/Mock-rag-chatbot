@@ -1,0 +1,73 @@
+################################################################################
+# INGESTION NODE CONFIGURATION
+################################################################################
+
+ingestion:
+  # Supported file formats
+  supported_formats:
+    - "pdf"
+    - "txt"
+    - "json"
+    - "md"
+    - "markdown"
+
+  # Parser selection per format (tool-agnostic)
+  parsers:
+    pdf:
+      parser_name: "fitz"        # "fitz", "pdfplumber", etc.
+      timeout_seconds: 30
+      max_pages: 500
+      max_file_size_mb: 100
+      # SECURITY: reference env var name only
+      api_key_env_var: "${INGESTION_PDF_API_KEY}"
+
+    txt:
+      parser_name: "builtin"
+      timeout_seconds: 10
+      max_file_size_mb: 500
+      encodings:
+        - "utf-8"
+        - "latin-1"
+        - "cp1252"
+
+    json:
+      parser_name: "builtin"
+      timeout_seconds: 10
+      max_file_size_mb: 100
+      flatten_nested: true
+      max_depth: 5
+
+    markdown:
+      parser_name: "builtin"
+      timeout_seconds: 10
+      max_file_size_mb: 100
+      preserve_code_blocks: true
+      remove_comments: true
+
+  # Global limits for all formats
+  global:
+    timeout_seconds: 60
+    max_retries: 3
+    retry_delay_seconds: 2
+    max_concurrent_parsers: 4
+
+  # Error handling
+  error_handling:
+    fallback_to_text: true
+    fail_gracefully: false
+    verbose_errors: true
+
+  # Monitoring & cost tracking
+  monitoring:
+    mlflow_enabled: true
+    log_metrics:
+      - "bytes_parsed"
+      - "parse_time_ms"
+      - "format_detected"
+      - "pages_extracted"
+      - "word_count"
+
+  # Custom parser plugin system (future)
+  custom_parsers:
+    enabled: false
+    plugin_dir: "./src/tools/ingestion/custom_parsers"

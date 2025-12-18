@@ -1,0 +1,32 @@
+################################################################################
+# CHUNKER CONFIGURATION
+################################################################################
+
+chunking:
+  # Strategy: "recursive", "token", or "semantic"
+  strategy: "recursive"
+
+  # Recursive character-based chunking
+  recursive:
+    chunk_size: 512
+    overlap: 50
+    separators:
+      - "\n\n"
+      - "\n"
+      - " "
+      - ""          # fallback char-level
+    respect_sentences: true
+    timeout_seconds: 30
+
+  # Token-based chunking (token-aware)
+  token:
+    max_tokens: 512
+    overlap_tokens: 50
+    encoding: "cl100k_base"
+    timeout_seconds: 60
+
+  # Semantic chunking (future)
+  semantic:
+    similarity_threshold: 0.8
+    fallback_strategy: "recursive"
+    timeout_seconds: 120

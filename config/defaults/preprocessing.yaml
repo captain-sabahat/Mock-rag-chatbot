@@ -1,0 +1,105 @@
+################################################################################
+# PREPROCESSING NODE CONFIGURATION
+################################################################################
+
+preprocessing:
+  # Which strategy to use
+  strategy_name: "aggressive"    # "aggressive", "conservative", "semantic"
+
+  # AGGRESSIVE strategy (default)
+  aggressive:
+    enabled: true
+
+    remove_html_tags: true
+    remove_xml_tags: true
+
+    normalize_spaces: true
+    remove_extra_newlines: true
+    collapse_tabs: true
+
+    remove_control_chars: true
+    keep_chars: ["\n", "\t", "\r"]
+
+    remove_multiple_punctuation: true
+    remove_broken_unicode: true
+
+    remove_duplicate_lines: true
+    remove_empty_lines: true
+
+    normalize_quotes: true
+    normalize_dashes: true
+
+    min_char_ratio: 0.05
+    min_word_ratio: 0.10
+    timeout_seconds: 30
+
+  # CONSERVATIVE strategy
+  conservative:
+    enabled: false
+
+    remove_html_tags: true
+    remove_xml_tags: true
+    normalize_spaces: false
+    remove_extra_newlines: false
+    collapse_tabs: false
+    remove_control_chars: true
+    keep_chars: ["\n", "\t", "\r", " "]
+    remove_multiple_punctuation: false
+    remove_duplicate_lines: false
+    remove_empty_lines: false
+    min_char_ratio: 0.01
+    timeout_seconds: 30
+
+  # SEMANTIC strategy (future, optional external NLP)
+  semantic:
+    enabled: false
+    nlp_model: "en_core_web_sm"
+    remove_stopwords: false
+    lemmatize: false
+    timeout_seconds: 60
+    nlp_api_key_env_var: "${PREPROCESSING_NLP_API_KEY}"
+
+  # Global settings
+  global:
+    timeout_seconds: 60
+    max_retries: 2
+    fail_gracefully: false
+
+  # Optional language detection
+  language_detection:
+    enabled: false
+    method: "langdetect"           # "langdetect", "textblob", "external_api"
+    api_endpoint: "${PREPROCESSING_LANG_DETECT_URL}"
+    api_key_env_var: "${PREPROCESSING_LANG_API_KEY}"
+    timeout_seconds: 5
+
+  # Output validation
+  validation:
+    min_length: 10
+    min_words: 5
+    check_encoding: true
+    warn_low_text_ratio: true
+
+  # Monitoring
+  monitoring:
+    mlflow_enabled: true
+    log_metrics:
+      - "original_length"
+      - "cleaned_length"
+      - "char_retention_ratio"
+      - "word_retention_ratio"
+      - "processing_time_ms"
+      - "strategy_used"
+      - "lines_removed"
+      - "duplicates_found"
+
+  # Resource tuning
+  resource:
+    batch_size: 100
+    max_memory_mb: 500
+
+  # Debug options
+  debug:
+    save_intermediate: false
+    debug_output_dir: "./debug/preprocessing"
+    log_removed_content: false

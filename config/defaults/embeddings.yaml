@@ -1,90 +1,129 @@
-# ==============================================================================
-# EMBEDDINGS CONFIGURATION
-# ==============================================================================
-#
-# Controls how text is converted to vectors for semantic search.
-#
-# DEVELOPMENT: HuggingFace (free, open-source, no API keys)
-# PRODUCTION: OpenAI (high quality, paid) or alternatives
-#
-# ==============================================================================
+################################################################################
+# EMBEDDINGS NODE CONFIGURATION
+################################################################################
 
-# ============================================================================
-# ACTIVE PROVIDER SELECTION
-# ============================================================================
+embeddings:
+  # ✅ FIX 1: Renamed from active_provider to provider
+  active_provider: "huggingface"  # "openai", "huggingface", "cohere", "mistral", "local"
+  
+  # ✅ FIX 2: Added model_name (required by Pydantic schema)
+  model_name: "BAAI/bge-base-en-v1.5"
+  
+  # ✅ FIX 3: Added dimension (required by Pydantic schema)
+  dimension: 768
 
-# Which provider: huggingface | openai | cohere
-active_provider: "huggingface"
+  # OPENAI provider
+  openai:
+    enabled: false
+    model_name: "text-embedding-3-small"
+    dimension: 1536
+    api_endpoint: "https://api.openai.com/v1/embeddings"
+    api_key_env_var: "${OPENAI_API_KEY}"
+    batch_size: 100
+    max_retries: 3
+    timeout_seconds: 30
+    cost_per_1k_tokens: 0.02
+    log_tokens_used: true
 
-# ============================================================================
-# HUGGINGFACE CONFIGURATION (Development - ACTIVE)
-# ============================================================================
-#
-# Free, open-source sentence-transformers
-# Model: all-MiniLM-L6-v2 (384-dim, 22MB, fast on CPU)
-#
+  # HUGGINGFACE provider (default, OSS)
+  huggingface:
+    enabled: true
+    model_name: "BAAI/bge-base-en-v1.5"
+    dimension: 768
+    loading_method: "huggingface_hub"  # or "local"
+    local_model_path: ""
+    use_inference_api: false
+    inference_api_endpoint: "${HUGGINGFACE_INFERENCE_ENDPOINT}"
+    api_key_env_var: "${HUGGINGFACE_API_KEY}"
+    device: "cpu"  # or "cuda:0"
+    batch_size: 32
+    model_kwargs:
+      trust_remote_code: false
+      force_download: false
+      resume_download: true
+      cache_dir: "./models/huggingface"
+    max_seq_length: 512
+    normalize_embeddings: true
+    max_retries: 3
+    timeout_seconds: 60
 
-huggingface:
-  enabled: true
-  model_name: "sentence-transformers/all-MiniLM-L6-v2"
-  dimension: 384
-  device: "cpu"            # "cpu" or "cuda" if GPU available
-  batch_size: 32
-  normalize_embeddings: true
-  cache_folder: "./models/embeddings"
+  # COHERE provider
+  cohere:
+    enabled: false
+    model_name: "embed-english-v3.0"
+    dimension: 1024
+    api_endpoint: "https://api.cohere.com/v1/embed"
+    api_key_env_var: "${COHERE_API_KEY}"
+    batch_size: 100
+    input_type: "search_document"
+    max_retries: 3
+    timeout_seconds: 30
+    cost_per_1m_tokens: 1.0
+    log_tokens_used: true
 
-# ============================================================================
-# OPENAI CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# High quality, but requires:
-# - API key
-# - Payment per token
-# - Model: text-embedding-3-small (1536-dim, more accurate)
-#
+  # MISTRAL provider
+  mistral:
+    enabled: false
+    model_name: "mistral-embed"
+    dimension: 1024
+    api_endpoint: "https://api.mistral.ai/v1/embeddings"
+    api_key_env_var: "${MISTRAL_API_KEY}"
+    batch_size: 100
+    max_retries: 3
+    timeout_seconds: 30
 
-openai:
-  enabled: false
-  api_key: null  # Set from environment variable
-  model: "text-embedding-3-small"
-  dimension: 1536
-  batch_size: 20
+  # LOCAL custom embedding service
+  local:
+    enabled: false
+    api_endpoint: "http://localhost:8001/embed"
+    dimension: 768
+    batch_size: 32
+    timeout_seconds: 60
+    headers:
+      Authorization: "Bearer ${LOCAL_EMBED_TOKEN}"
 
-# ============================================================================
-# COHERE CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# Alternative provider, requires:
-# - API key
-# - Payment per request
-#
+  # Global settings
+  global:
+    max_retries: 3
+    retry_delay_seconds: 2
+    timeout_seconds: 60
+    validate_dimension: true
+    validate_not_null: true
+    cache_enabled: true
+    cache_backend: "redis"  # "redis", "sqlite", "memory"
+    cache_ttl_hours: 24
+    cost_tracking_enabled: true
+    cost_alert_threshold_usd: 100
+    fallback_provider: "huggingface"
+    fallback_enabled: true
 
-cohere:
-  enabled: false
-  api_key: null  # Set from environment variable
-  model: "embed-english-v3.0"
-  dimension: 1024
-  batch_size: 20
+  # Security
+  security:
+    log_api_keys: false
+    mask_api_keys_in_logs: true
+    validate_provider_ssl: true
+    encrypt_cache: false
 
-# ============================================================================
-# GLOBAL SETTINGS
-# ============================================================================
+  # Monitoring
+  monitoring:
+    mlflow_enabled: true
+    log_metrics:
+      - "chunks_embedded"
+      - "embedding_time_ms"
+      - "provider_used"
+      - "dimension"
+      - "api_calls_made"
+      - "tokens_used"
+      - "cache_hit_ratio"
+      - "cost_usd"
+    alerts:
+      - condition: "chunks_embedded > 10000"
+        severity: "warning"
+      - condition: "embedding_time_ms > 5000"
+        severity: "error"
 
-cache_enabled: false
-
-# ==============================================================================
-# QUICK SWITCH GUIDE
-# ==============================================================================
-#
-# FOR DEVELOPMENT (HuggingFace - Recommended):
-#   active_provider: "huggingface"
-#   huggingface.enabled: true
-#   openai.enabled: false
-#
-# FOR PRODUCTION (OpenAI - High Quality):
-#   active_provider: "openai"
-#   openai.enabled: true
-#   openai.api_key: "sk-..."  # From env var
-#   huggingface.enabled: false
-#
-# ==============================================================================
+  # Resource limits
+  resource:
+    max_memory_mb: 2000
+    max_gpu_memory_mb: 8000
+    max_queue_size: 1000

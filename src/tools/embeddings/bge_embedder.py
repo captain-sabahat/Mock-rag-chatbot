@@ -1,272 +1,195 @@
 """
 ================================================================================
-BGE EMBEDDER MODULE
+BGE EMBEDDER IMPLEMENTATION
 src/tools/embeddings/bge_embedder.py
 
-MODULE PURPOSE:
-───────────────
-BGE (BAAI General Embedding) implementation for dense retrieval.
-State-of-the-art dense vector embeddings.
+PURPOSE:
+- Concrete implementation of BaseEmbedder for BGE models
+- Reads ALL config from injected config dict (no hardcoding)
+- Provider-specific embedding logic only
+- NO config loading (that's registry_embed.py's job)
 
-WORKING & METHODOLOGY:
-──────────────────────
-1. BGE MODEL CHARACTERISTICS:
-   - Dimension: 384 or 1024 (configurable)
-   - Training: Dense retrieval-focused
-   - Performance: SOTA on MTEB benchmarks
-   - Speed: Optimized inference
-
-2. EMBEDDING PROCESS:
-   - Input text normalization
-   - Tokenization (max 512 tokens)
-   - Forward pass through model
-   - L2 normalization (optional)
-   - Vector output (384-1024 dims)
-
-3. OPTIMIZATION:
-   - Batch processing
-   - GPU acceleration
-   - Model quantization ready
-   - Memory efficient
-
-HOW IT CONTRIBUTES TO RAG PIPELINE:
-──────────────────────────────────
-- Dense retrieval embeddings
-- High-quality semantic search
-- Best-in-class MTEB performance
-- Proven RAG effectiveness
-
-PERFORMANCE METRICS:
-────────────────────
-- Speed: ~1-2ms per text
-- Quality: Top MTEB rankings
-- Dimension: 384 or 1024
-- Batch size: 1-128
-
+KEY: This file only does BGE embedding. Config comes from BaseEmbedder init.
 ================================================================================
 """
 
-from typing import Dict, Any, List, Optional
 import logging
 import time
-import numpy as np
-from .base_embedder import BaseEmbedder, EmbeddingResult
+from typing import Dict, Any, List
+from .embed_registry import BaseEmbedder, EmbeddingResult
 
+logger = logging.getLogger(__name__)
 
 class BGEEmbedder(BaseEmbedder):
     """
-    BGE (BAAI General Embedding) embedder implementation.
+    BGE (BAAI General Embeddings) embedder implementation.
     
-    Features:
-    - Dense retrieval optimized
-    - Multi-scale embeddings
-    - State-of-the-art MTEB performance
-    - Production-ready
-    
-    Example:
-        >>> embedder = BGEEmbedder({
-        ...     "model_name": "BAAI/bge-base-en-v1.5",
-        ...     "dimension": 384,
-        ...     "normalized": True
-        ... })
-        >>> result = await embedder.embed(text)
+    Reads config from constructor, never hardcodes parameters.
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, provider_name: str, config: Dict[str, Any]):
         """
         Initialize BGE embedder.
         
         Args:
-            config: Configuration dictionary
+            provider_name: "huggingface" (passed by factory)
+            config: Provider config dict from YAML
+                   Contains: model_name, dimension, batch_size, etc.
         """
-        super().__init__(config)
+        super().__init__(provider_name, config)
         
-        # BGE-specific config (config-driven)
-        self.max_tokens = config.get("max_tokens", 512) if config else 512
-        self.use_query_instruction = config.get("use_query_instruction", False) if config else False
-        self.query_instruction = config.get("query_instruction", "") if config else ""
-        self.use_document_instruction = config.get("use_document_instruction", False) if config else False
-        self.document_instruction = config.get("document_instruction", "") if config else ""
-        
-        # Model mapping
-        self.model_mapping = {
-            "bge-base": 384,
-            "bge-large": 1024,
-            "bge-base-en": 384,
-            "bge-large-en": 1024,
-            "bge-small": 384,
-        }
-        
-        # Verify dimension
-        if self.dimension not in [384, 768, 1024]:
-            self.logger.warning(
-                "Unusual BGE dimension: %d (typical: 384, 768, 1024)" % self.dimension
+        # BGE-specific initialization
+        try:
+            from sentence_transformers import SentenceTransformer
+            
+            self.model_name = config.get("model_name", "BAAI/bge-base-en-v1.5")
+            self.device = config.get("device", "cpu")
+            
+            self.logger.info(f"📦 Loading BGE model: {self.model_name}...")
+            
+            self.model = SentenceTransformer(
+                self.model_name,
+                device=self.device,
+                #trust_remote_code=config.get("trust_remote_code", False), otherwise manual loading 
+            )
+            
+            # Verify dimension
+            test_embedding = self.model.encode(["test"])
+            actual_dim = len(test_embedding[0])
+            
+            if actual_dim != self.dimension:
+                self.logger.warning(
+                    f"⚠️ Dimension mismatch: config={self.dimension}, "
+                    f"actual={actual_dim}. Using actual."
+                )
+                self.dimension = actual_dim
+            
+            self.logger.info(
+                f"✅ BGEEmbedder ready: model={self.model_name}, "
+                f"dimension={self.dimension}, device={self.device}, "
+                f"normalize={self.normalize_embeddings}"
             )
         
-        self.logger.info(
-            "BGEEmbedder initialized (model=%s, dim=%d, max_tokens=%d)" %
-            (self.model_name, self.dimension, self.max_tokens)
-        )
+        except ImportError:
+            self.logger.error(
+                "❌ sentence-transformers not installed. "
+                "Install with: pip install sentence-transformers"
+            )
+            raise
+        except Exception as e:
+            self.logger.error(f"❌ BGE initialization failed: {str(e)}", exc_info=True)
+            raise
     
-    async def embed(
-        self,
-        text: str,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> EmbeddingResult:
+    async def embed(self, text: str) -> EmbeddingResult:
         """
-        Embed text using BGE model.
+        Embed a single text using BGE.
         
         Args:
-            text: Input text
-            metadata: Document metadata
+            text: Text to embed
             
         Returns:
-            EmbeddingResult with vector
+            EmbeddingResult with vector and metadata
         """
         start_time = time.time()
         
-        if not text or len(text) == 0:
-            self.logger.warning("Empty text provided")
-            # Return zero vector for empty input
-            return EmbeddingResult(
-                text=text,
-                vector=[0.0] * self.dimension,
-                dimension=self.dimension,
-                model_name=self.model_name,
-                normalized=self.normalized,
-                processing_time_ms=0,
-                metadata=metadata,
-            )
-        
         try:
-            # Determine if text is query or document
-            is_query = metadata.get("is_query", False) if metadata else False
+            # Encode with sentence-transformers
+            # normalize_embeddings is built-in parameter
+            embedding = self.model.encode(
+                text,
+                normalize_embeddings=self.normalize_embeddings,
+            )
             
-            # Apply instruction if needed
-            processed_text = text
-            if is_query and self.use_query_instruction:
-                processed_text = f"{self.query_instruction}{text}"
-            elif not is_query and self.use_document_instruction:
-                processed_text = f"{self.document_instruction}{text}"
+            # Ensure correct dimension
+            if len(embedding) != self.dimension:
+                self.logger.warning(
+                    f"⚠️ Embedding dimension mismatch: "
+                    f"got {len(embedding)}, expected {self.dimension}"
+                )
             
-            # Simulate embedding generation (in production, call actual model)
-            vector = self._generate_embedding(processed_text)
-            
-            # Normalize if configured
-            if self.normalized:
-                vector = self._normalize_vector(vector)
-            
-            # Calculate processing time
             elapsed_ms = (time.time() - start_time) * 1000
             
-            # Create result
             result = EmbeddingResult(
                 text=text,
-                vector=vector,
-                dimension=self.dimension,
-                model_name=self.model_name,
-                normalized=self.normalized,
+                vector=embedding.tolist(),
+                dimension=len(embedding),
+                provider=self.provider_name,
                 processing_time_ms=elapsed_ms,
+                normalized=self.normalize_embeddings,
                 metadata={
-                    **(metadata or {}),
-                    "is_query": is_query,
                     "model": self.model_name,
+                    "text_length": len(text),
+                    "tokens_approx": len(text) // 4,  # Rough estimate
                 }
             )
             
-            # Validate
-            if self._validate_embedding(result):
-                await self._record_embedding([result])
-                return result
-            else:
-                self.logger.error("Embedding validation failed")
-                return result
-                
+            return result
+        
         except Exception as e:
-            self.logger.error("Embedding generation failed: %s" % str(e))
+            self.logger.error(
+                f"❌ Embedding failed for text (len={len(text)}): {str(e)}",
+                exc_info=True
+            )
             raise
     
-    def _generate_embedding(self, text: str) -> List[float]:
+    async def embed_batch(self, texts: List[str]) -> tuple:
         """
-        Generate embedding vector for text.
-        (Mock implementation - in production, call actual model)
+        Embed multiple texts efficiently using batch processing.
         
         Args:
-            text: Input text
+            texts: List of texts to embed
             
         Returns:
-            Embedding vector
-        """
-        # Mock: Generate deterministic vector based on text hash
-        hash_val = hash(text) % 2**31
-        np.random.seed(hash_val)
-        vector = np.random.randn(self.dimension).astype(np.float32)
-        return vector.tolist()
-    
-    async def embed_batch(
-        self,
-        texts: List[str],
-        metadata: Optional[List[Dict[str, Any]]] = None
-    ) -> List[EmbeddingResult]:
-        """
-        Embed multiple texts efficiently.
-        
-        Args:
-            texts: List of texts
-            metadata: Optional metadata per text
-            
-        Returns:
-            List of EmbeddingResults
+            (results list, total count)
         """
         start_time = time.time()
-        results = []
         
-        # Process in batches
-        for i in range(0, len(texts), self.batch_size):
-            batch_texts = texts[i:i + self.batch_size]
-            batch_metadata = metadata[i:i + self.batch_size] if metadata else None
+        try:
+            self.logger.info(
+                f"📦 Embedding batch: {len(texts)} texts, "
+                f"batch_size={self.batch_size}..."
+            )
             
-            batch_results = []
-            for j, text in enumerate(batch_texts):
-                meta = batch_metadata[j] if batch_metadata else None
-                result = await self.embed(text, meta)
-                batch_results.append(result)
+            # Encode all at once (sentence-transformers handles batching)
+            embeddings = self.model.encode(
+                texts,
+                batch_size=self.batch_size,
+                normalize_embeddings=self.normalize_embeddings,
+                show_progress_bar=False,
+            )
             
-            results.extend(batch_results)
-        
-        elapsed_ms = (time.time() - start_time) * 1000
-        self.logger.info(
-            "Embedded batch of %d texts in %.2fms" %
-            (len(texts), elapsed_ms)
-        )
-        
-        return results
-    
-    async def embed_with_instruction(
-        self,
-        text: str,
-        instruction: str,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> EmbeddingResult:
-        """
-        Embed text with custom instruction.
-        
-        Args:
-            text: Input text
-            instruction: Custom instruction prefix
-            metadata: Document metadata
+            results = []
+            for i, (text, embedding) in enumerate(zip(texts, embeddings)):
+                result = EmbeddingResult(
+                    text=text,
+                    vector=embedding.tolist(),
+                    dimension=len(embedding),
+                    provider=self.provider_name,
+                    processing_time_ms=(time.time() - start_time) * 1000 / len(texts),
+                    normalized=self.normalize_embeddings,
+                    metadata={
+                        "model": self.model_name,
+                        "batch_index": i,
+                        "text_length": len(text),
+                    }
+                )
+                results.append(result)
             
-        Returns:
-            EmbeddingResult
-        """
-        # Prepend instruction
-        instructed_text = f"{instruction}{text}"
+            total_time_ms = (time.time() - start_time) * 1000
+            texts_per_sec = len(texts) / (total_time_ms / 1000)
+            
+            self.logger.info(
+                f"✅ Batch complete: {len(results)} embeddings in "
+                f"{total_time_ms:.1f}ms ({texts_per_sec:.1f} texts/sec)"
+            )
+            
+            return results, len(results)
         
-        # Create metadata with instruction flag
-        meta = {
-            **(metadata or {}),
-            "instruction": instruction,
-            "custom_instruction": True,
-        }
-        
-        return await self.embed(instructed_text, meta)
+        except Exception as e:
+            self.logger.error(
+                f"❌ Batch embedding failed ({len(texts)} texts): {str(e)}",
+                exc_info=True
+            )
+            raise
+
+__all__ = ['BGEEmbedder']

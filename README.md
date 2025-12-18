@@ -533,3 +533,177 @@ pip install faiss-gpu
 Getting Help
 
 📞 Contact & Support
+
+
+
+
+
+
+
+RAG-CHATBOT-MOCK/
+├── config/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   ├── loader.py
+│   ├── settings.py
+│   └── defaults/
+│       ├── chunker.yaml
+│       ├── embeddings.yaml
+│       ├── session_store.yaml
+│       └── vectordb.yaml
+│
+├── data/
+│   ├── embeddings/
+│   ├── faiss_index/
+│   ├── monitoring/
+│   │   ├── config.json
+│   │   ├── health.json
+│   │   ├── logs.json
+│   │   ├── metrics.json
+│   │   ├── pipeline_logs.json
+│   │   ├── status.json
+│   │   └── tools_health.json
+│   ├── processed/
+│   ├── sessions/
+│   │   └── sessions.db
+│   └── uploads/
+│
+├── frontend/
+│   └── ...                        # (UI files not expanded)
+│
+├── logs/
+│   └── monitoring_logs.json
+│
+├── scripts/
+│   ├── run_backend.sh
+│   └── setup_env.sh
+│
+├── src/
+│   ├── __pycache__/
+│   ├── __init__.py
+│   │
+│   ├── api/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── models.py
+│   │   └── routes.py
+│   │
+│   ├── cache/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── hybrid_session_store.py
+│   │   ├── mongodb_session_store.py
+│   │   ├── redis_session_store.py
+│   │   ├── session_store_factory.py
+│   │   ├── session_store_interface.py
+│   │   └── sqlite_session_store.py
+│   │
+│   ├── core/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── base_tool.py
+│   │   ├── circuit_breaker.py
+│   │   ├── exceptions.py
+│   │   └── log_buffer.py
+│   │
+│   ├── pipeline/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── orchestrator.py
+│   │   └── schemas.py
+│   │   └── nodes/
+│   │       ├── __pycache__/
+│   │       ├── __init__.py
+│   │       ├── chunking_node.py
+│   │       ├── embedding_node.py
+│   │       ├── ingestion_node.py
+│   │       ├── preprocessing_node.py
+│   │       └── vectordb_node.py
+│   │
+│   ├── tools/
+│   │   ├── __init__.py
+│   │   ├── chunking/
+│   │   │   ├── __init__.py
+│   │   │   ├── base_chunker.py
+│   │   │   ├── semantic_chunker.py
+│   │   │   └── sliding_window_chunker.py
+│   │   │
+│   │   ├── embeddings/
+│   │   │   ├── __init__.py
+│   │   │   ├── embedd_registry.py
+│   │   │   ├── bge_embedder.py
+│   │   │   
+│   │   │
+│   │   ├── ingestion/
+│   │   │   ├── __init__.py
+│   │   │   ├── document_processor.py
+│   │   │   ├── models.py
+│   │   │   └── parsers/
+│   │   │       ├── __init__.py
+│   │   │       ├── base_parser.py
+│   │   │       ├── json_parser.py
+│   │   │       ├── markdown_parser.py
+│   │   │       ├── pdf_parser.py
+│   │   │       └── text_parser.py
+│   │   │
+│   │   ├── preprocessors/
+│   │   │   ├── __init__.py
+│   │   │   ├── base_preprocessor.py
+│   │   │   ├── language_detector.py
+│   │   │   └── text_cleaner.py
+│   │   │
+│   │   └── vectordb/
+│   │       ├── __init__.py
+│   │       ├── vectordb_registry.py
+│   │       
+│   │       
+│   │
+│   └── utils/
+│       ├── __pycache__/
+│       ├── __init__.py
+│       ├── file_validator.py
+│       └── helpers.py
+│
+├── tests/
+│   ├── __init__.py
+│   ├── test_chunking.py
+│   ├── test_embeddings.py
+│   └── test_ingestion.py
+│
+├── venv/
+├── .env.dev
+├── .env.example
+├── .gitignore
+├── README.md
+└── requirements.txt
+
+┌─────────────────────────────────────────────────────────────┐
+│                      EXTERNAL (Routes)                       │
+├─────────────────────────────────────────────────────────────┤
+│ • /ingest/upload → call orchestrator                         │
+│ • /ingest/status → READ monitoring/*.json                    │
+│ • /monitor/* → READ monitoring/*.json                        │
+└────────────────────────┬────────────────────────────────────┘
+                         │ calls (upward, safe)
+┌────────────────────────▼────────────────────────────────────┐
+│                    ORCHESTRATION LAYER                       │
+├─────────────────────────────────────────────────────────────┤
+│ • Call nodes sequentially                                    │
+│ • Read enriched state from nodes                             │
+│ • Derive progress (NODE_PROGRESS_MAP)                        │
+│ • Build failure_summary with context                         │
+│ • WRITE monitoring/*.json (← routes read this)               │
+└────────────────────────┬────────────────────────────────────┘
+                         │ calls (upward, safe)
+┌────────────────────────▼────────────────────────────────────┐
+│                    PIPELINE LAYER (Nodes)                    │
+├─────────────────────────────────────────────────────────────┤
+│ • Ingest: read raw content, return processed state           │
+│ • Preprocess: add preprocess_item_count, preprocess_head     │
+│ • Chunk: add num_chunks, chunk_size_min/max                  │
+│ • Embed: add num_embeddings, embedding_samples               │
+│ • Vectordb: add vectordb_batches_total, vectordb_upsert_count│
+│ • LOG to terminal (no route coupling)                        │
+│ • UPDATE state (orchestrator reads this)                     │
+└─────────────────────────────────────────────────────────────┘

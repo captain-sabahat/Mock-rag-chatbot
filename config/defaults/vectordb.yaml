@@ -1,125 +1,171 @@
-# ==============================================================================
+################################################################################
 # VECTOR DATABASE CONFIGURATION
-# ==============================================================================
-#
-# Controls where and how embeddings are stored and retrieved.
-#
-# DEVELOPMENT: FAISS (in-memory, CPU, free, fast)
-# PRODUCTION: Qdrant (persistent, scalable) or others
-#
-# ==============================================================================
+################################################################################
 
-# ============================================================================
-# ACTIVE PROVIDER SELECTION
-# ============================================================================
+vectordb:
+  # Which backend to use
+  active_backend: "faiss"     # "qdrant", "pinecone", "faiss", "weaviate", "chromadb", "milvus"
 
-# Which provider: faiss | qdrant | pinecone | weaviate | milvus
-active_provider: "faiss"
+  # QDRANT backend (default OSS)
+  qdrant:
+    enabled: false
+    deployment_mode: "local"   # "local" or "remote"
 
-# Global settings
-timeout_seconds: 30
+    local:
+      api_endpoint: "http://localhost:6333"
+      use_http: false
 
-# ============================================================================
-# FAISS CONFIGURATION (Development - ACTIVE)
-# ============================================================================
-#
-# Fast Approximate Similarity Search Library
-# Perfect for development, prototyping, CPU-based
-#
-# - In-memory (blazingly fast)
-# - CPU-based (no GPU needed)
-# - Free and open-source
-# - Can save/load from disk
-#
+    remote:
+      api_endpoint: "${QDRANT_REMOTE_ENDPOINT}"
+      api_key_env_var: "${QDRANT_API_KEY}"
 
-faiss:
-  enabled: true
-  index_type: "IVFFlat"        # IVFFlat, HNSW, Flat, etc.
-  metric_type: "L2"            # L2 or IP (inner product)
-  nlist: 100                   # Number of clusters (for IVFFlat)
-  nprobe: 10                   # Clusters to search
-  data_path: "./data/vectordb/faiss_index"
-  save_index: true             # Persist to disk
-  normalize: true              # Normalize embeddings
+    collection:
+      name: "documents"
+      vector_size: 768
+      distance: "cosine"       # "cosine", "euclidean", "dot"
+      payload_schema:
+        chunk_id: "text"
+        request_id: "text"
+        file_name: "text"
+        chunk_index: "integer"
+        chunk_text: "text"
+        created_at: "text"
+        embedding_model: "text"
 
-# ============================================================================
-# QDRANT CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# Distributed vector search engine
-# Good for: Production, persistence, clustering
-#
-# Requires: Qdrant server running locally or in cloud
-#
+    batch_size: 100
+    timeout_seconds: 30
+    enable_replication: false
+    enable_snapshot: false
 
-qdrant:
-  enabled: false
-  url: "http://localhost:6333"
-  api_key: null  # Optional, for Qdrant Cloud
-  collection_name: "documents"
-  vector_size: 384
-  distance: "Cosine"
+  # PINECONE backend (managed)
+  pinecone:
+    enabled: false
+    api_key_env_var: "${PINECONE_API_KEY}"
+    api_endpoint: "https://api.pinecone.io"
+    project_id: "${PINECONE_PROJECT_ID}"
+    environment: "gcp-starter"
 
-# ============================================================================
-# PINECONE CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# Managed vector database (paid service)
-# Good for: Enterprise, serverless, fully managed
-#
+    index:
+      name: "documents"
+      dimension: 768
+      metric: "cosine"
 
-pinecone:
-  enabled: false
-  api_key: null  # Required
-  environment: "us-west1-gcp"
-  index_name: "rag-documents"
-  dimension: 384
+    metadata_index:
+      - "request_id"
+      - "file_name"
+      - "chunk_index"
+      - "created_at"
 
-# ============================================================================
-# WEAVIATE CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# Open-source vector database with knowledge graphs
-# Good for: Complex queries, semantic relationships
-#
+    batch_size: 100
+    timeout_seconds: 30
+    pod_type: "s1"
 
-weaviate:
-  enabled: false
-  url: "http://localhost:8080"
-  api_key: null
-  class_name: "Document"
+  # FAISS backend (local library)
+  faiss:
+    enabled: true
+    index_path: "./data/faiss_indices"
+    index_name: "documents.idx"
+    dimension: 768
+    index_type: "HNSW"
+    faiss_params:
+      m: 16
+      ef_construction: 200
+      ef_search: 100
+    metadata_backend: "sqlite"
+    metadata_db: "./data/faiss_metadata.db"
+    batch_size: 100
+    timeout_seconds: 30
 
-# ============================================================================
-# MILVUS CONFIGURATION (Production - DISABLED)
-# ============================================================================
-#
-# Open-source, scalable vector database
-# Good for: Large-scale deployments, distributed systems
-#
+  # WEAVIATE backend
+  weaviate:
+    enabled: false
+    deployment_mode: "local"
+    api_endpoint: "http://localhost:8080"
+    api_key_env_var: "${WEAVIATE_API_KEY}"
+    class:
+      name: "DocumentChunk"
+      vector_index_type: "hnsw"
+    batch_size: 100
+    timeout_seconds: 30
 
-milvus:
-  enabled: false
-  host: "localhost"
-  port: 19530
-  db_name: "default"
-  collection_name: "documents"
+  # CHROMADB backend
+  chromadb:
+    enabled: false
+    mode: "persistent"               # "in_memory", "persistent", "http"
+    persist_directory: "./data/chroma"
+    http_client:
+      api_endpoint: "http://localhost:8000"
+    collection:
+      name: "documents"
+      metadata_fields:
+        - "request_id"
+        - "file_name"
+        - "chunk_index"
+    batch_size: 100
+    timeout_seconds: 30
 
-# ==============================================================================
-# QUICK SWITCH GUIDE
-# ==============================================================================
-#
-# FOR DEVELOPMENT (FAISS - Recommended):
-#   active_provider: "faiss"
-#   faiss.enabled: true
-#
-# FOR PRODUCTION (Qdrant - Recommended):
-#   active_provider: "qdrant"
-#   qdrant.enabled: true
-#   faiss.enabled: false
-#
-# FOR PRODUCTION (Pinecone - Managed):
-#   active_provider: "pinecone"
-#   pinecone.enabled: true
-#   pinecone.api_key: "pk-..."
-#
-# ==============================================================================
+  # MILVUS backend
+  milvus:
+    enabled: false
+    host: "localhost"
+    port: 19530
+    username: "${MILVUS_USERNAME}"
+    password_env_var: "${MILVUS_PASSWORD}"
+    collection:
+      name: "documents"
+      dimension: 768
+      index_type: "IVF_FLAT"
+    batch_size: 100
+    timeout_seconds: 30
+
+  # Global settings
+  global:
+    max_retries: 3
+    retry_delay_seconds: 2
+    timeout_seconds: 30
+    validate_dimension: true
+    validate_before_upsert: true
+    search:
+      default_top_k: 5
+      min_score_threshold: 0.5
+    fallback_enabled: true
+    fallback_backend: "faiss"
+    connection_pool_size: 10
+    connection_timeout_seconds: 5
+
+  # Security
+  security:
+    log_api_keys: false
+    mask_api_keys: true
+    verify_ssl: true
+    ca_cert_path: ""
+
+  # Monitoring
+  monitoring:
+    mlflow_enabled: true
+    log_metrics:
+      - "chunks_stored"
+      - "upsert_time_ms"
+      - "search_time_ms"
+      - "avg_search_latency_ms"
+      - "index_size_mb"
+      - "backend_used"
+    alerts:
+      - condition: "search_time_ms > 1000"
+        severity: "warning"
+      - condition: "upsert_time_ms > 5000"
+        severity: "error"
+
+  # Resource limits
+  resource:
+    max_index_size_mb: 5000
+    max_queries_per_second: 100
+    max_upserts_per_minute: 1000
+
+  # Data retention
+  retention:
+    enable_auto_delete: false
+    delete_after_days: 365
+    enable_backups: true
+    backup_frequency: "daily"
+    backup_location: "./backups/vectordb"

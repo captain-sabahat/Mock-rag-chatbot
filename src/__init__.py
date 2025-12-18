@@ -3,134 +3,92 @@
 RAG ADMIN PIPELINE - Root Package Initialization
 ================================================================================
 
-PURPOSE:
---------
-Initialize the RAG (Retrieval-Augmented Generation) Admin Pipeline package.
-Exports all public APIs at the root level for easy importing.
+PURPOSE
+-------
+Expose the main public API of the RAG Admin Pipeline from a single root package
+`src`, so application code can do:
 
-ARCHITECTURE:
---------------
-    src/
-    ├── api/             (FastAPI routes & models)
-    ├── core/            (Base classes, exceptions, patterns)
-    ├── cache/           (Session storage & caching)
-    ├── pipeline/        (Orchestration & nodes)
-    ├── utils/           (Utilities & helpers)
-    └── __init__.py      (This file - root exports)
+    from src import get_orchestrator, validate_file, BaseTool
 
-STRUCTURE:
+instead of importing from many internal modules.
+
+LAYERS
+------
+- src.core      : BaseTool, exceptions, circuit breaker, log buffer
+- src.pipeline  : Orchestrator, pipeline state/schemas, nodes
+- src.api       : FastAPI routers and API models
+- src.utils     : Generic utilities (validation, time, formatting, etc.)
+- src.cache     : Session store abstraction (if you use it)
+
+KEY OBJECTS
 -----------
-Level 1 Imports (Direct from submodules):
-  - src.core.*
-  - src.cache.*
-  - src.pipeline.*
-  - src.utils.*
-  - src.api.*
+- Orchestrator:
+    get_orchestrator(), PipelineOrchestrator
 
-Level 2 Imports (Root level):
-  - from src import BaseTool, CircuitBreakerManager
-  - from src import get_orchestrator, PipelineState
-  - from src import SessionStoreFactory
-  - from src import validate_file, measure_time
+- Pipeline models:
+    PipelineState, NodeStatus, PipelineStatus, CircuitBreakerState
 
-VERSION:
---------
-    1.0.0 - Initial release
-    - Complete RAG pipeline
-    - 5-node processing workflow
-    - Vector database integration
-    - Error handling & retry logic
-    - Full test coverage
+- Core:
+    BaseTool, ToolConfig
+    RAGPipelineException + specific error types
+    CircuitBreakerManager, CircuitState
 
-ENVIRONMENT VARIABLES:
-----------------------
-    LOG_LEVEL=INFO          # Logging level (DEBUG, INFO, WARNING, ERROR)
-    ENVIRONMENT=production  # Environment (development, staging, production)
-    ENABLE_METRICS=true    # Enable Prometheus metrics
-    CACHE_BACKEND=redis    # Cache backend (redis, memory, disk)
-    DB_URL=...             # Database connection string
-    VECTORDB_BACKEND=qdrant # Vector DB (qdrant, pinecone, faiss)
+- Monitoring API:
+    api_router (FastAPI router with /api/monitor/* and other endpoints)
 
-QUICK START:
+QUICK START
 -----------
-    # Initialize RAG pipeline
-    from src import get_orchestrator, validate_file
-    import uuid
-    
-    # Validate file
-    is_valid, error = validate_file("document.pdf", file_bytes)
-    if not is_valid:
-        raise ValueError(error)
-    
-    # Process document
-    orchestrator = get_orchestrator()
-    request_id = await orchestrator.process_document(
-        request_id=str(uuid.uuid4()),
-        file_name="document.pdf",
-        file_content=file_bytes
-    )
-    
-    # Check status
-    status = await orchestrator.get_status(request_id)
-    print(f"Status: {status['status']}")
-    print(f"Progress: {status['progress_percent']}%")
+from src import get_orchestrator, validate_file
+import uuid
 
-MODULES:
---------
-    ✅ core/            - Base classes, exceptions, patterns
-    ✅ cache/           - Session storage, caching layer
-    ✅ pipeline/        - Orchestration, nodes, schemas
-    ✅ utils/           - File validation, helpers
-    ✅ api/             - FastAPI routes, models
+# Validate file bytes
+is_valid, error = validate_file("document.pdf", file_bytes)
+if not is_valid:
+    raise ValueError(error)
 
-TESTING:
---------
-    pytest tests/           # Run all tests
-    pytest tests/ -v        # Verbose output
-    pytest tests/ --cov     # With coverage
-    pytest -k "test_name"   # Run specific test
+# Run pipeline
+orchestrator = get_orchestrator()
+request_id = str(uuid.uuid4())
+result_id = orchestrator.process_document_sync(
+    request_id=request_id,
+    file_name="document.pdf",
+    file_content=file_bytes,
+)
 
-DEPLOYMENT:
------------
-    docker build -t rag-pipeline .
-    docker run -p 8000:8000 rag-pipeline
+print("Request ID:", result_id)
 
-API:
-----
-    POST /api/v1/upload              - Upload document
-    GET  /api/v1/status/{request_id} - Check processing status
-    POST /api/v1/query               - Query processed documents
-    GET  /api/v1/health              - Health check
+# In a different process / later:
+# Use /api/monitor/status/{request_id} to read monitoring JSON files.
 
 ================================================================================
 """
 
-import logging
-import sys
-from typing import Optional
+from __future__ import annotations
 
-# Set up root logger
+import logging
+from typing import Any
+
+# -----------------------------------------------------------------------------
+# Basic package metadata and logging
+# -----------------------------------------------------------------------------
+
+__version__ = "1.0.0"
+__title__ = "RAG Admin Pipeline"
+__author__ = "RAG Pipeline Team"
+
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-
 logger = logging.getLogger(__name__)
+logger.info("🚀 Initializing %s v%s", __title__, __version__)
 
-# Version
-__version__ = "1.0.0"
-__author__ = "RAG Pipeline Team"
-__title__ = "RAG Admin Pipeline"
-
-logger.info(f"🚀 Initializing {__title__} v{__version__}")
-
-
-# ============================================================================
-# CORE IMPORTS - Exception classes, base classes, patterns
-# ============================================================================
+# -----------------------------------------------------------------------------
+# CORE IMPORTS - Base classes, exceptions, circuit breaker, log buffer
+# -----------------------------------------------------------------------------
 
 from src.core import (
-    # Base classes
+    # Base tool abstraction
     BaseTool,
     ToolConfig,
     # Exceptions
@@ -141,55 +99,47 @@ from src.core import (
     EmbeddingError,
     VectorDBError,
     ConfigurationError,
-    # Patterns
+    # Exception severity helpers (used by orchestrator & CB)
+    get_exception_severity,
+    should_trigger_circuit_breaker,
+    validate_exception_severity,
+    is_exception_recoverable,
+    register_exception_severity,
+    # Circuit breaker
+    CircuitBreaker,
     CircuitBreakerManager,
-    CircuitBreakerConfig,
     CircuitState,
 )
 
-# ============================================================================
-# CACHE IMPORTS - Session storage, state management
-# ============================================================================
+# Optional: if you have a log buffer class in core/log_buffer.py
+try:  # keep optional so src can import without api/log deps
+    from src.core.log_buffer import LogBuffer
+except Exception:  # pragma: no cover - optional
+    LogBuffer = None  # type: ignore
 
-from src.cache import (
-    # Factory
-    SessionStoreFactory,
-    # Base interface
-    SessionStore,
-    # Models
-    SessionModel,
-    NodeCheckpoint,
-    SessionMessage,
-)
 
-# ============================================================================
-# PIPELINE IMPORTS - Orchestration, state, nodes
-# ============================================================================
+# -----------------------------------------------------------------------------
+# PIPELINE IMPORTS - Orchestrator, state/schemas, nodes package
+# -----------------------------------------------------------------------------
 
-from src.pipeline import (
-    # Orchestrator
-    get_orchestrator,
-    PipelineOrchestrator,
-    # State
+from src.pipeline.schemas import (
     PipelineState,
     NodeStatus,
-    NodeInput,
-    NodeOutput,
-    NodeCheckpointData,
+    PipelineStatus,
+    CircuitBreakerState,  # overall CB snapshot used in monitoring
 )
 
-from src.pipeline.nodes import (
-    # Nodes
-    ingestion_node,
-    preprocessing_node,
-    chunking_node,
-    embedding_node,
-    vectordb_node,
+from src.pipeline import (
+    PipelineOrchestrator,
+    get_orchestrator,
+    reset_orchestrator,
+    nodes,  # src.pipeline.nodes package (ingestion_node, etc.)
 )
 
-# ============================================================================
-# UTILS IMPORTS - Validation, helpers, utilities
-# ============================================================================
+
+# -----------------------------------------------------------------------------
+# UTILS IMPORTS - Validation, helpers, formatting, retry, etc.
+# -----------------------------------------------------------------------------
 
 from src.utils import (
     # File validation
@@ -199,24 +149,25 @@ from src.utils import (
     get_file_type,
     ALLOWED_EXTENSIONS,
     MAX_FILE_SIZE,
-    # Helpers
+    # Timing / metrics
     measure_time,
     format_size,
     format_duration,
     safe_json_dumps,
     retry_on_exception,
+    # Misc
     sanitize_filename,
 )
 
-# ============================================================================
-# API IMPORTS - Routes, models, middleware
-# ============================================================================
+
+# -----------------------------------------------------------------------------
+# API IMPORTS - Routers and models (optional at import time)
+# -----------------------------------------------------------------------------
 
 try:
     from src.api import (
-        # Routers
         router as api_router,
-        # Models
+        # If you still expose these Pydantic models:
         UploadRequest,
         UploadResponse,
         QueryRequest,
@@ -224,23 +175,26 @@ try:
         StatusResponse,
         ErrorResponse,
     )
-except ImportError as e:
-    logger.warning(f"⚠️  API imports failed (optional): {str(e)}")
+except Exception as e:  # pragma: no cover - API optional for non‑web usage
+    logger.warning("⚠️ API imports failed (optional): %s", e)
+    api_router = None  # type: ignore
+    UploadRequest = UploadResponse = QueryRequest = QueryResponse = None  # type: ignore
+    StatusResponse = ErrorResponse = None  # type: ignore
 
 
-# ============================================================================
-# PUBLIC API - What users can import from `src`
-# ============================================================================
+# -----------------------------------------------------------------------------
+# PUBLIC API - What `from src import *` exposes
+# -----------------------------------------------------------------------------
 
 __all__ = [
-    # Version
+    # Metadata
     "__version__",
     "__title__",
     "__author__",
-    
-    # Core classes & exceptions
+    # Core tool + config
     "BaseTool",
     "ToolConfig",
+    # Exceptions
     "RAGPipelineException",
     "ValidationError",
     "ProcessingError",
@@ -248,34 +202,28 @@ __all__ = [
     "EmbeddingError",
     "VectorDBError",
     "ConfigurationError",
-    
-    # Patterns
+    # Exception helpers
+    "get_exception_severity",
+    "should_trigger_circuit_breaker",
+    "validate_exception_severity",
+    "is_exception_recoverable",
+    "register_exception_severity",
+    # Circuit breaker
+    "CircuitBreaker",
     "CircuitBreakerManager",
-    "CircuitBreakerConfig",
-    "CircuitBreakerState",
-    
-    # Cache
-    "SessionStoreFactory",
-    "RedisSessionStore",
-    "MemorySessionStore",
-    "SessionData",
-    
-    # Pipeline
-    "get_orchestrator",
+    "CircuitState",
+    # Optional log buffer
+    "LogBuffer",
+    # Pipeline orchestrator and state
     "PipelineOrchestrator",
+    "get_orchestrator",
+    "reset_orchestrator",
     "PipelineState",
     "NodeStatus",
-    "NodeInput",
-    "NodeOutput",
-    "NodeCheckpointData",
-    
-    # Nodes
-    "ingestion_node",
-    "preprocessing_node",
-    "chunking_node",
-    "embedding_node",
-    "vectordb_node",
-    
+    "PipelineStatus",
+    "CircuitBreakerState",
+    # Nodes package (src.pipeline.nodes)
+    "nodes",
     # Utils
     "validate_file",
     "validate_file_type",
@@ -289,7 +237,6 @@ __all__ = [
     "safe_json_dumps",
     "retry_on_exception",
     "sanitize_filename",
-    
     # API (optional)
     "api_router",
     "UploadRequest",
@@ -298,119 +245,70 @@ __all__ = [
     "QueryResponse",
     "StatusResponse",
     "ErrorResponse",
+    # Helpers below
+    "initialize_pipeline",
+    "get_version",
+    "print_summary",
 ]
 
 
-# ============================================================================
+# -----------------------------------------------------------------------------
 # INITIALIZATION HELPERS
-# ============================================================================
+# -----------------------------------------------------------------------------
 
 def initialize_pipeline(
     log_level: str = "INFO",
-    cache_backend: str = "memory",
-    vectordb_backend: str = "qdrant",
 ) -> None:
     """
-    Initialize the RAG pipeline with configuration.
-    
-    Call this once at application startup.
-    
-    Args:
-        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
-        cache_backend: Cache backend (memory, redis)
-        vectordb_backend: Vector DB backend (qdrant, pinecone, faiss)
-        
-    Example:
-        from src import initialize_pipeline
-        
-        initialize_pipeline(
-            log_level="INFO",
-            cache_backend="redis",
-            vectordb_backend="qdrant"
-        )
+    Initialize the RAG pipeline.
+
+    - Sets global logging level.
+    - Creates the orchestrator singleton (which in turn wires circuit breaker,
+      monitoring writer, and node graph).
+    - Can be called once at application startup.
     """
-    # Set logging level
-    log_level = log_level.upper()
-    logging.getLogger().setLevel(getattr(logging, log_level, logging.INFO))
-    logger.info(f"📋 Logging level set to {log_level}")
-    
-    # Initialize cache
-    from src.cache import SessionStoreFactory
-    SessionStoreFactory.set_backend(cache_backend)
-    logger.info(f"💾 Cache backend set to {cache_backend}")
-    
-    # Initialize orchestrator
-    from src.pipeline import get_orchestrator
-    orchestrator = get_orchestrator()
-    logger.info(f"🚀 Pipeline orchestrator initialized")
-    
-    # Health check
-    health = orchestrator.health_check()
-    logger.info(f"✅ Pipeline health: {health['status']}")
-    
-    logger.info(f"🎉 RAG Pipeline initialized successfully!")
+    level = log_level.upper()
+    logging.getLogger().setLevel(getattr(logging, level, logging.INFO))
+    logger.info("📋 Logging level set to %s", level)
+
+    # Touch orchestrator so any lazy initialization runs
+    _ = get_orchestrator()
+    logger.info("🚀 Pipeline orchestrator initialized")
 
 
 def get_version() -> str:
-    """Get pipeline version."""
+    """Return the package version string."""
     return __version__
 
 
 def print_summary() -> None:
-    """Print pipeline summary."""
+    """Print a high‑level summary of the RAG pipeline components."""
     summary = f"""
-    ╔════════════════════════════════════════════════════════╗
-    ║          RAG ADMIN PIPELINE - v{__version__}                ║
-    ╚════════════════════════════════════════════════════════╝
-    
-    📦 Modules:
-       ✅ core/    - Base classes, exceptions, patterns
-       ✅ cache/   - Session storage, caching
-       ✅ pipeline/ - Orchestration, nodes, schemas
-       ✅ utils/   - File validation, helpers
-       ✅ api/     - FastAPI routes, models
-    
-    🔧 Main Classes:
-       • PipelineOrchestrator - Main orchestration engine
-       • PipelineState        - Pipeline state management
-       • BaseTool             - Base class for all tools
-       • CircuitBreakerManager - Fault tolerance
-    
-    🛠️  Key Functions:
-       • get_orchestrator()   - Get orchestrator singleton
-       • validate_file()      - File validation
-       • measure_time()       - Performance measurement
-       • format_size()        - Human-readable size
-    
-    📊 Pipeline Nodes:
-       1. ingestion_node      - Parse files to text
-       2. preprocessing_node  - Clean & normalize
-       3. chunking_node       - Split into chunks
-       4. embedding_node      - Generate vectors
-       5. vectordb_node       - Store in database
-    
-    🚀 Quick Start:
-       from src import get_orchestrator, validate_file
-       import uuid
-       
-       orchestrator = get_orchestrator()
-       request_id = await orchestrator.process_document(
-           request_id=str(uuid.uuid4()),
-           file_name="document.pdf",
-           file_content=open("document.pdf", "rb").read()
-       )
-    
-    📚 Documentation:
-       https://docs.example.com/rag-pipeline
-    
-    """
+╔════════════════════════════════════════════════════════╗
+║ {__title__} - v{__version__} ║
+╚════════════════════════════════════════════════════════╝
+
+📦 Modules:
+  • core/      - BaseTool, exceptions, circuit breaker, log buffer
+  • pipeline/  - Orchestrator, nodes, schemas, monitoring integration
+  • utils/     - File validation, helpers, timing, retries
+  • api/       - FastAPI routes & monitoring endpoints
+
+🧠 Orchestrator:
+  • PipelineOrchestrator (get via get_orchestrator())
+  • Writes monitoring JSON:
+      data/monitoring/nodes/{{request_id}}/{{node}}_node.json
+      data/monitoring/nodes/{{request_id}}/pipeline_status.json
+
+🧩 Core:
+  • BaseTool, ToolConfig
+  • CircuitBreakerManager, CircuitState
+  • Exception severity helpers (should_trigger_circuit_breaker, ...)
+
+📊 Monitoring API:
+  • /api/monitor/status/{{request_id}}
+  • /api/monitor/metrics
+  • /api/monitor/health
+  • /api/monitor/circuit-breaker
+"""
     print(summary)
-
-
-# ============================================================================
-# STARTUP LOGGING
-# ============================================================================
-
-logger.info(f"✅ RAG Pipeline v{__version__} loaded successfully")
-logger.debug(f"Available modules: {', '.join(__all__[:10])}...")
-logger.debug(f"Total exports: {len(__all__)}")

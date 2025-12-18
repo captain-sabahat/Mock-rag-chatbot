@@ -40,41 +40,23 @@ v1.0.0 - Initial release with FAISS and mock clients
 
 ================================================================================
 """
+from .vectordb_registry import (
+    VectorDBConfig,
+    VectorStoreResult,
+    BaseVectorDB,
+    FAISSVectorDB,
+    QdrantVectorDB,
+    VectorDBFactory,
+    load_vectordb_config,
+)
 
-__version__ = "1.0.0"
+# Register backends
+VectorDBFactory.register('faiss', FAISSVectorDB)
+VectorDBFactory.register('qdrant', QdrantVectorDB)
 
-# Critical: Import base classes first
-try:
-    from .base_vectordb import (
-        BaseVectorDB,
-        VectorStoreConfig,
-        SearchResult,
-    )
-except ImportError as e:
-    raise ImportError(f"Failed to import base vectordb: {str(e)}")
-
-# Critical: Import FAISS client
-try:
-    from .faiss_client import FAISSClient
-except ImportError as e:
-    raise ImportError(f"Failed to import FAISS client: {str(e)}")
-
-# Critical: Import mock vectordb
-try:
-    from .mock_vectordb import MockVectorDB
-except ImportError as e:
-    raise ImportError(f"Failed to import mock vectordb: {str(e)}")
-
-# Public API exports
 __all__ = [
-    "BaseVectorDB",
-    "VectorStoreConfig",
-    "SearchResult",
-    "FAISSClient",
-    "MockVectorDB",
-    "__version__",
+    'VectorDBConfig',
+    'VectorStoreResult',
+    'VectorDBFactory',
+    'load_vectordb_config',
 ]
-
-import logging
-logger = logging.getLogger(__name__)
-logger.info("Vector database package initialized successfully (v%s)" % __version__)

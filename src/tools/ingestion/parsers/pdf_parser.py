@@ -50,6 +50,8 @@ MONITORING & HEALTH:
 
 import io
 import time
+from typing import Dict, Any
+
 from PyPDF2 import PdfReader
 from .base_parser import BaseParser
 # #MLFLOW:METRIC_parse_duration_ms
