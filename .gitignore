@@ -1,0 +1,4 @@
+# Git ignore rules
+user_venv
+.env
+.env_example

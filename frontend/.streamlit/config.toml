@@ -1,0 +1,16 @@
+[theme]
+primaryColor = "#2196f3"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f2f6"
+textColor = "#262730"
+font = "sans serif"
+
+[client]
+showErrorDetails = true
+
+[logger]
+level = "info"
+
+[server]
+port = 8502
+headless = true

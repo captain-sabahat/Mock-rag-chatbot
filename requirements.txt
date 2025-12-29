@@ -1,0 +1,121 @@
+# ================================================================================
+# Backend Requirements - Optimized for Python 3.12.10 & pip 25.3
+# ================================================================================
+# Generated: November 8, 2025
+# Python: 3.12.10
+# pip: 25.3
+
+# ================================================================================
+# CORE WEB FRAMEWORK
+# ================================================================================
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# ================================================================================
+# ASYNC & UTILITIES
+# ================================================================================
+asyncio-contextmanager==1.0.1
+
+# ================================================================================
+# CACHING (Optional - uncomment if using Redis)
+# ================================================================================
+redis>=5.0.1
+
+# ================================================================================
+# VECTOR DATABASE (Optional - uncomment if using Qdrant)
+# ================================================================================
+# qdrant-client[fastembed]==2.5.0
+
+# ================================================================================
+# ML/NLP - PYTHON 3.12 COMPATIBLE
+# ================================================================================
+# PyTorch 2.0.1 NOT available for Python 3.12
+# Using PyTorch 2.9.0 (latest, fully compatible)
+torch==2.9.0
+
+# Hugging Face models (SLM + embeddings)
+transformers>=4.56.0
+huggingface-hub>=0.26.0
+sentence-transformers>=3.3.0
+tokenizers>=0.20.0
+safetensors>=0.4.5
+accelerate>=1.1.0
+
+google-genai>=1.10.0
+
+# ================================================================================
+# DOCUMENT PROCESSING
+# ================================================================================
+PyPDF2==3.0.1
+python-docx==0.8.11
+python-magic==0.4.27
+
+# ================================================================================
+# HTTP CLIENT
+# ================================================================================
+httpx[http2]>=0.25.1
+requests>=2.31.0
+
+# ================================================================================
+# UTILITIES
+# ================================================================================
+python-dotenv>=1.0.0
+python-dateutil>=2.8.2
+
+# ================================================================================
+# FRONTEND - WEB FRAMEWORK
+# ================================================================================
+Flask==3.0.0
+Flask-CORS==4.0.0
+
+# ================================================================================
+# FRONTEND - STREAMLIT (Optional UI alternative)
+# ================================================================================
+# Uncomment if using Streamlit instead of Flask
+# streamlit==1.28.0
+# streamlit-chat==0.1.1
+
+# ================================================================================
+# WSGI SERVER - PRODUCTION
+# ================================================================================
+Werkzeug==3.0.1
+gunicorn==21.2.0
+
+# Vector DB (FAISS)
+faiss-cpu>=1.12.0
+
+# ================================================================================
+# NOTES FOR PYTHON 3.12.10
+# ================================================================================
+# 1. torch==2.0.1 is NOT compatible with Python 3.12
+#    → Using torch==2.9.0 instead (latest stable)
+#
+# 2. All packages tested and working with pip 25.3
+#
+# 3. If you get "jsonify" error, remove it (it's built into Flask)
+#
+# 4. Optional packages commented out:
+#    - redis[asyncio]: Only if using Redis cache
+#    - qdrant-client: Only if using Qdrant vector DB
+#    - streamlit: Only if using Streamlit UI
+#
+# ================================================================================
+# INSTALLATION INSTRUCTIONS
+# ================================================================================
+# 1. Create virtual environment:
+#    python -m venv venv
+#    source venv/bin/activate  (Windows: venv\Scripts\activate)
+#
+# 2. Upgrade pip (important for Python 3.12):
+#    pip install --upgrade pip setuptools wheel
+#
+# 3. Install requirements:
+#    pip install -r requirements.txt
+#
+# 4. Verify installation:
+#    python -c "import torch; print(f'PyTorch {torch.__version__}')"
+#    python -c "import fastapi; print(f'FastAPI {fastapi.__version__}')"
+#
+# =====================================================================
