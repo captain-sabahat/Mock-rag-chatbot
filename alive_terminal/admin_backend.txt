@@ -1,0 +1,276 @@
+PS C:\Users\sabahat\OneDrive\Desktop\rag-chatbot-mock>venv/Scripts/activate
+(venv) PS C:\Users\sabahat\OneDrive\Desktop\rag-chatbot-mock> uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+INFO:     Will watch for changes in these directories: ['C:\\Users\\sabahat\\OneDrive\\Desktop\\rag-chatbot-mock']                                           
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [16924] using WatchFiles
+2026-01-11 18:33:26,134 - src - INFO - 🚀 Initializing RAG Admin Pipeline v1.0.0
+2026-01-11 18:33:27,338 - src.tools.chunking - INFO - Chunking package initialized successfully (v1.0.0)
+2026-01-11 18:33:27,705 - src.tools.embeddings.embed_registry - INFO - ✅ Registered embedder: huggingface
+2026-01-11 18:33:27,705 - src.tools.embeddings - INFO - ✅ Embeddings package initialized
+2026-01-11 18:33:27,705 - src.tools.embeddings - INFO -    Registered providers: ['huggingface']
+2026-01-11 18:33:27,928 - src.tools.preprocessors - INFO - Preprocessors package initialized successfully (v1.0.0)
+2026-01-11 18:33:27,971 - src.tools.vectordb.vectordb_registry - INFO - ✅ Registered backend: faiss
+2026-01-11 18:33:27,971 - src.tools.vectordb.vectordb_registry - INFO - ✅ Registered backend: qdrant
+C:\Users\sabahat\OneDrive\Desktop\rag-chatbot-mock\venv\Lib\site-packages\pydantic\_internal\_fields.py:149: UserWarning: Field "model_name" has conflict with protected namespace "model_".
+
+You may be able to resolve this warning by setting `model_config['protected_namespaces'] = ()`.
+  warnings.warn(
+2026-01-11 18:33:28,435 - config.settings - INFO - ✅ Settings initialized from .env (singleton)
+2026-01-11 18:33:28,435 - config.tools.tool_registry - INFO - ✅ Tools validated - Active: ChunkingStrategy.RECURSIVE / EmbeddingProvider.HUGGINGFACE / VectorDBProvider.FAISS
+2026-01-11 18:33:28,435 - config.tools.tool_registry - INFO - 📋 Tool registry initialized
+2026-01-11 18:33:28,435 - config.tools - INFO -
+    📦 Tools Config Subpackage Initialized
+
+    Exports:
+       • ToolRegistry         - Tool metadata class
+       • get_tool_registry()  - Get singleton registry
+
+    Helper Functions:
+       • get_available_tools()      - List all tools by type
+       • get_tool_status()          - Current tool status
+       • check_tool_compatibility() - Check production readiness
+
+    Usage: from config.tools import get_tool_registry
+    Or:    from config import get_tool_registry
+
+2026-01-11 18:33:28,436 - src.core.circuit_breaker - INFO - 🔌 Circuit breaker manager initialized
+2026-01-11 18:33:28,463 - src.api.main - INFO - ✅ FastAPI application created successfully
+2026-01-11 18:33:28,463 - src.api.main - INFO - 📖 Documentation available at:
+ Swagger UI: http://localhost:8000/docs
+ ReDoc: http://localhost:8000/redoc
+2026-01-11 18:33:28,463 - src - WARNING - ⚠️ API imports failed (optional): cannot import name 'router' from 'src.api' (C:\Users\sabahat\OneDrive\Desktop\ragg-chatbot-mock\src\api\__init__.py)
+INFO:     Started server process [2328]
+INFO:     Waiting for application startup.
+2026-01-11 18:33:28,466 - src.api.main - INFO - ================================================================================
+2026-01-11 18:33:28,466 - src.api.main - INFO - 🚀 RAG PIPELINE API - STARTING UP
+2026-01-11 18:33:28,466 - src.api.main - INFO - ================================================================================
+2026-01-11 18:33:28,466 - src.api.main - INFO - 📂 Initializing configuration system (.env + YAML)...
+2026-01-11 18:33:28,466 - config.loader - INFO - ================================================================================
+2026-01-11 18:33:28,466 - config.loader - INFO - 🚀 Initializing configuration system...
+2026-01-11 18:33:28,466 - config.loader - INFO - ================================================================================
+2026-01-11 18:33:28,480 - config.loader - INFO - 🔧 ConfigLoader initialized: environment=dev, dir=C:\Users\sabahat\OneDrive\Desktop\rag-chatbot-mock\config\settings
+2026-01-11 18:33:28,480 - config.loader - INFO - 📂 Loading configuration from C:\Users\sabahat\OneDrive\Desktop\rag-chatbot-mock\config\settings
+2026-01-11 18:33:28,481 - config.loader - INFO - ✅ Configuration loaded successfully
+2026-01-11 18:33:28,481 - config.loader - INFO - ================================================================================
+2026-01-11 18:33:28,481 - config.loader - INFO - ✅ Configuration system initialized successfully
+2026-01-11 18:33:28,481 - config.loader - INFO - ================================================================================
+2026-01-11 18:33:28,481 - src.api.main - INFO - ✅ Configuration loaded successfully
+2026-01-11 18:33:28,481 - src.api.main - INFO - ⚙️ Loading application settings from .env...
+2026-01-11 18:33:28,483 - src.api.main - INFO - ✅ Settings loaded from .env
+ Session Store: backend=<SessionStoreBackend.SQLITE: 'sqlite'> operation_timeout_seconds=600 max_retries=5 sqlite=SQLiteSettings(enabled=True, db_path='./data/sessions/sessions.db', max_connections=10, enable_wal=True, auto_vacuum=True, journal_mode='WAL', timeout_seconds=10, check_same_thread=False) redis=RedisSettings(enabled=False, host='localhost', port=6379, db=0, password=None, use_tls=False, max_connections=50, timeout_seconds=30, socket_keepalive=True, session_ttl_seconds=604800) mongodb=MongoDBSettings(enabled=False, uri='mongodb://localhost:27017', database='rag_pipeline', collection='sessions', username=None, password=None, max_pool_size=50, min_pool_size=10)
+ Chunking: unknown
+ Embeddings: unknown
+ Vector DB: unknown
+2026-01-11 18:33:28,483 - src.api.main - INFO - 🔧 Loading tool registry with models from .env...
+2026-01-11 18:33:28,483 - src.api.main - INFO - ✅ Tool registry loaded with .env models
+ Active Chunker: ChunkingStrategy.RECURSIVE
+ Active Embedder: EmbeddingProvider.HUGGINGFACE
+ Active Vector DB: VectorDBProvider.FAISS
+2026-01-11 18:33:28,483 - src.api.main - INFO - 📁 Initializing monitoring directory...
+2026-01-11 18:33:28,483 - src.api.main - INFO - ✅ Monitoring directory ready: data\monitoring
+2026-01-11 18:33:28,483 - src.api.main - INFO - ================================================================================
+2026-01-11 18:33:28,483 - src.api.main - INFO - ✅ RAG PIPELINE API - STARTUP COMPLETE
+2026-01-11 18:33:28,483 - src.api.main - INFO - ================================================================================
+2026-01-11 18:33:28,484 - src.api.main - INFO - 📝 Initializing log buffer for live pipeline logs...
+2026-01-11 18:33:28,484 - src.api.main - INFO - ✅ Log buffer initialized - Live logs enabled
+INFO:     Application startup complete.
+2026-01-11 18:37:48,416 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:37:48,537 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:37:48,623 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 1 logs
+INFO:     127.0.0.1:57641 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:37:50,764 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:57643 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:37:52,987 - src.api.routes - INFO - 📡 POST /api/monitor/status - Fetching full system status
+2026-01-11 18:37:53,168 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\status.json
+2026-01-11 18:37:53,246 - src.api.routes - INFO - ✅ Full system status retrieved and persisted
+INFO:     127.0.0.1:57645 - "POST /api/monitor/status HTTP/1.1" 200 OK
+2026-01-11 18:37:55,382 - src.api.routes - INFO - 📡 POST /api/monitor/metrics - Fetching live metrics
+2026-01-11 18:37:55,483 - src.api.routes - INFO - ✅ Live metrics: total=0, completed=0, failed=0, processing=0
+2026-01-11 18:37:55,596 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json
+INFO:     127.0.0.1:57647 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:37:57,722 - src.api.routes - INFO - 📡 POST /api/monitor/health - Running system health check
+2026-01-11 18:37:57,863 - src.core.circuit_breaker - INFO - 🔌 Circuit breaker manager initialized
+2026-01-11 18:37:57,953 - src.pipeline.orchestrator - INFO - 🚀 Pipeline orchestrator initialized (v2.5)
+2026-01-11 18:37:58,047 - src.pipeline.orchestrator - INFO - ✅ Orchestrator singleton created
+2026-01-11 18:37:58,115 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\health.json
+2026-01-11 18:37:58,192 - src.api.routes - INFO - ✅ System health check completed and persisted
+INFO:     127.0.0.1:57649 - "POST /api/monitor/health HTTP/1.1" 200 OK
+2026-01-11 18:38:00,332 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:57651 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:38:05,735 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:38:05,821 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:38:05,882 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 18 logs
+INFO:     127.0.0.1:58457 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:38:08,005 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:58459 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:38:10,215 - src.api.routes - INFO - 📡 POST /api/monitor/metrics - Fetching live metrics
+2026-01-11 18:38:10,339 - src.api.routes - INFO - ✅ Live metrics: total=0, completed=0, failed=0, processing=0
+2026-01-11 18:38:10,449 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json
+INFO:     127.0.0.1:57644 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:38:12,527 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:57648 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:38:21,455 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:38:21,532 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:38:21,614 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 26 logs
+INFO:     127.0.0.1:59234 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:38:23,794 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:59236 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:38:25,985 - src.api.routes - INFO - 📡 POST /api/monitor/metrics - Fetching live metrics
+2026-01-11 18:38:26,115 - src.api.routes - INFO - ✅ Live metrics: total=0, completed=0, failed=0, processing=0
+2026-01-11 18:38:26,201 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json
+INFO:     127.0.0.1:59239 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:38:27,317 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:38:27,428 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:38:27,514 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 33 logs
+INFO:     127.0.0.1:59240 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:38:29,610 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:59242 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:38:31,848 - src.api.routes - INFO - 📤 Upload started: Drifts.pdf by None
+2026-01-11 18:38:31,933 - src.api.routes - INFO - ✨ Ingestion created: 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+2026-01-11 18:38:32,022 - src.api.routes - INFO - ✅ Document uploaded: Drifts.pdf → 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+INFO:     127.0.0.1:60034 - "POST /api/ingest/upload HTTP/1.1" 202 Accepted
+2026-01-11 18:38:32,103 - src.api.routes - INFO - 🔄 Starting orchestrator pipeline for 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+2026-01-11 18:38:32,189 - src.api.routes - INFO - 📄 File loaded: Drifts.pdf (626697 bytes)
+2026-01-11 18:38:32,274 - src.api.routes - INFO - 🚀 Calling orchestrator.process_document() for 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+2026-01-11 18:38:32,354 - src.pipeline.orchestrator - INFO - 📄 Processing: Drifts.pdf (request_id: 5a09a8e3-5fa9-46bb-b871-acc4e572c183)
+2026-01-11 18:38:32,571 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:32,682 - src.pipeline.orchestrator - INFO - 🔄 Executing node: ingestion
+2026-01-11 18:38:32,755 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:32,807 - src.pipeline.orchestrator - INFO - 📊 Progress: 20%
+2026-01-11 18:38:32,844 - src.pipeline.nodes.ingestion_node - INFO - 📄 Ingestion Node: Processing Drifts.pdf
+2026-01-11 18:38:32,844 - src.pipeline.nodes.ingestion_node - INFO - 🔍 A Method: Validating input...
+2026-01-11 18:38:32,844 - src.pipeline.nodes.ingestion_node - INFO - 🚀 B Method: Executing parsing...
+2026-01-11 18:38:33,024 - src.pipeline.nodes.ingestion_node - INFO - ✅ C Method: Validating output...
+2026-01-11 18:38:33,024 - src.pipeline.nodes.ingestion_node - INFO - ✅ Ingestion COMPLETED | status=COMPLETED | size=626697B | chars=11622       
+2026-01-11 18:38:33,024 - src.pipeline.orchestrator - INFO - ✅ Node status: completed
+2026-01-11 18:38:33,089 - src.utils.monitoring_writer - INFO - 📝 Node status written: data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\ingestion_node.json
+2026-01-11 18:38:33,094 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:33,151 - src.pipeline.orchestrator - INFO - 🔄 Executing node: preprocessing
+2026-01-11 18:38:33,201 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:33,245 - src.pipeline.orchestrator - INFO - 📊 Progress: 40%
+2026-01-11 18:38:33,288 - src.pipeline.nodes.preprocessing_node - INFO - 🧹 Preprocessing Node: Cleaning text
+2026-01-11 18:38:33,288 - src.pipeline.nodes.preprocessing_node - INFO - 🔍 A Method: Validating input...
+2026-01-11 18:38:33,288 - src.pipeline.nodes.preprocessing_node - INFO - 🚀 B Method: Executing cleaning...
+2026-01-11 18:38:33,289 - src.pipeline.nodes.preprocessing_node - INFO - ✅ C Method: Validating output...
+2026-01-11 18:38:33,291 - src.pipeline.nodes.preprocessing_node - INFO - ✅ Preprocessing COMPLETED | status=COMPLETED | items=1
+2026-01-11 18:38:33,292 - src.pipeline.orchestrator - INFO - ✅ Node status: completed
+2026-01-11 18:38:33,332 - src.utils.monitoring_writer - INFO - 📝 Node status written: data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\preprocessing_node.json
+2026-01-11 18:38:33,333 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:33,372 - src.pipeline.orchestrator - INFO - 🔄 Executing node: chunking
+2026-01-11 18:38:33,423 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:33,486 - src.pipeline.orchestrator - INFO - 📊 Progress: 60%
+2026-01-11 18:38:33,537 - src.pipeline.nodes.chunking_node - INFO - ✂️ Chhunking: Using recursive strategy (size=512, overlap=50)
+2026-01-11 18:38:33,538 - src.pipeline.nodes.chunking_node - INFO - 🔍 A Method: Validating input...
+2026-01-11 18:38:33,538 - src.pipeline.nodes.chunking_node - INFO - 🚀 B Method: Executing chunking...
+2026-01-11 18:38:33,538 - src.pipeline.nodes.chunking_node - INFO - ✅ C Method: Validating output...
+2026-01-11 18:38:33,541 - src.pipeline.nodes.chunking_node - INFO - ✅ Chunking COMPLETED | status=COMPLETED | chunks=2 | min_size=582 | max_size=1426
+2026-01-11 18:38:33,543 - src.pipeline.orchestrator - INFO - ✅ Node status: completed
+2026-01-11 18:38:33,607 - src.utils.monitoring_writer - INFO - 📝 Node status written: data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\chunking_node.json
+2026-01-11 18:38:33,608 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:33,653 - src.pipeline.orchestrator - INFO - 🔄 Executing node: embedding
+2026-01-11 18:38:33,691 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:33,732 - src.pipeline.orchestrator - INFO - 📊 Progress: 80%
+2026-01-11 18:38:33,783 - src.pipeline.nodes.embedding_node - INFO - 📋 Loading embedding configuration...
+2026-01-11 18:38:33,796 - src.tools.embeddings.embed_registry - INFO - ✅ EmbeddingConfig loaded: provider=huggingface, dimension=768, batch_size=32
+2026-01-11 18:38:33,796 - src.pipeline.nodes.embedding_node - INFO - ✅ Config loaded: provider=huggingface, dimension=768, batch_size=32
+2026-01-11 18:38:33,796 - src.pipeline.nodes.embedding_node - INFO - 🔍 A Method: Validating input...
+2026-01-11 18:38:33,798 - src.pipeline.nodes.embedding_node - INFO - ✅ Received: 2 chunks
+2026-01-11 18:38:33,798 - src.pipeline.nodes.embedding_node - INFO - ✅ Input validated: 2 non-empty chunks
+2026-01-11 18:38:33,798 - src.pipeline.nodes.embedding_node - INFO - 🚀 B Method: Creating huggingface embedder...
+2026-01-11 18:38:33,798 - src.tools.embeddings.embed_registry - INFO - 🏭 Creating huggingface embedder from config...
+2026-01-11 18:38:33,798 - BGEEmbedder - INFO - ✅ BGEEmbedder initialized: model=BAAI/bge-base-en-v1.5, dimension=768, normalize=True
+2026-01-11 18:38:49,168 - BGEEmbedder - INFO - 📦 Loading BGE model: BAAI/bge-base-en-v1.5...
+2026-01-11 18:38:49,168 - sentence_transformers.SentenceTransformer - INFO - Load pretrained SentenceTransformer: BAAI/bge-base-en-v1.5
+Batches: 100%|████████████████████████████| 1/1 [00:00<00:00, 19.53it/s]
+2026-01-11 18:38:51,089 - BGEEmbedder - INFO - ✅ BGEEmbedder ready: model=BAAI/bge-base-en-v1.5, dimension=768, device=cpu, normalize=True       
+2026-01-11 18:38:51,089 - src.pipeline.nodes.embedding_node - INFO - 📦 Starting embedding: 2 chunks with huggingface embedder (batch_size=32)... 
+2026-01-11 18:38:51,089 - BGEEmbedder - INFO - 📦 Embedding batch: 2 texts, batch_size=32...
+2026-01-11 18:38:51,374 - BGEEmbedder - INFO - ✅ Batch complete: 2 embeddings in 285.2ms (7.0 texts/sec)
+2026-01-11 18:38:51,374 - src.pipeline.nodes.embedding_node - INFO - ✅ Embedding complete: 2 embeddings generated
+2026-01-11 18:38:51,374 - src.pipeline.nodes.embedding_node - INFO - ✅ C Method: Validating output...
+2026-01-11 18:38:51,374 - src.pipeline.nodes.embedding_node - INFO - 🎉  ✅ Embedding complete: 2 embeddings from 2 chunks in 17591.8ms (0.1 embeddings/sec)
+2026-01-11 18:38:51,374 - src.pipeline.nodes.embedding_node - INFO - ✅ Embedding COMPLETED | status=COMPLETED | embeddings=2 | dim=768
+2026-01-11 18:38:51,374 - src.pipeline.nodes.embedding_node - INFO - 📊 EMBEDDING METRICS: total_embeddings=2, provider=huggingface, dimension=768, batch_size=32, execution_time_ms=17591.8, embeddings_per_second=0.1    
+2026-01-11 18:38:51,378 - src.pipeline.orchestrator - INFO - ✅ Node status: completed
+2026-01-11 18:38:51,424 - src.utils.monitoring_writer - INFO - 📝 Node status written: data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\embedding_node.json
+2026-01-11 18:38:51,424 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:51,450 - src.pipeline.orchestrator - INFO - 🔄 Executing node: vectordb
+2026-01-11 18:38:51,486 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:51,515 - src.pipeline.orchestrator - INFO - 📊 Progress: 100%
+2026-01-11 18:38:51,540 - src.pipeline.nodes.vectordb_node - INFO - 📋 Loading vector DB configuration...
+2026-01-11 18:38:51,551 - src.tools.vectordb.vectordb_registry - INFO -  ✅ VectorDBConfig loaded: backend=faiss, dimension=768, batch_size=100   
+2026-01-11 18:38:51,551 - src.pipeline.nodes.vectordb_node - INFO - ✅ Config loaded: backend=faiss, dimension=768, batch_size=100
+2026-01-11 18:38:51,551 - src.pipeline.nodes.vectordb_node - INFO - 🔍 A Method: Validating input...
+2026-01-11 18:38:51,552 - src.pipeline.nodes.vectordb_node - INFO - ✅ Received: 2 embeddings
+[vectordb_node] first_vector_top5 (first 5 vals): [0.04256602004170418, -0.021403614431619644, -0.01847486011683941, 0.07174007594585419, 0.08393535763025284]
+2026-01-11 18:38:51,552 - src.pipeline.nodes.vectordb_node - INFO - 🔍 Checking embedding dimensions: config=768, actual=768
+2026-01-11 18:38:51,553 - src.pipeline.nodes.vectordb_node - INFO - ✅ Input validated: 2 chunks, dimension=768
+2026-01-11 18:38:51,553 - src.pipeline.nodes.vectordb_node - INFO - 🚀 B Method: Creating faiss vector DB...
+2026-01-11 18:38:51,553 - src.tools.vectordb.vectordb_registry - INFO -  🏭 Creating faiss vector DB
+2026-01-11 18:38:51,553 - src.pipeline.nodes.vectordb_node - INFO - 📦 Starting batch upload to faiss...
+2026-01-11 18:38:51,553 - FAISSVectorDB - INFO - 📦 Starting batch upload: 2 vectors in 1 batches (batch_size=100)
+2026-01-11 18:38:51,555 - faiss.loader - INFO - Loading faiss with AVX2 support.
+2026-01-11 18:38:51,887 - faiss.loader - INFO - Successfully loaded faiss with AVX2 support.
+2026-01-11 18:38:51,973 - FAISSVectorDB - INFO - 📊 Batch 1/1: ✅ 2 vectors | Progress: 100.0%
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - 📊 Upload progress: Batch 1/1, Total: 2/2 vectors ✅
+2026-01-11 18:38:51,973 - FAISSVectorDB - INFO - ✅ Batch upload complete: 2/2 vectors in 420.4ms (4.8 vectors/sec)
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - ✅ Batch upload complete: 2/2 vectors in 420.4ms (4.8 vec/sec)
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - ✅ C Method: Validating output...
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - 🎉 ✅ VectorDB complete: 2/2 vectors stored in faiss in 420.4ms (4.8 vectors/sec)
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - ✅ Vectordb COMPLETED | status=COMPLETED | batches=1 | total=2
+2026-01-11 18:38:51,973 - src.pipeline.nodes.vectordb_node - INFO - 📊 VectorDB stats: backend=faiss, total_vectors=2, batch_count=1, storage_time_ms=420.4, vectors_per_second=4.8, failed_vectors=0
+2026-01-11 18:38:51,973 - src.pipeline.orchestrator - INFO - ✅ Node status: completed
+2026-01-11 18:38:52,014 - src.utils.monitoring_writer - INFO - 📝 Node status written: data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\vectordb_node.json
+2026-01-11 18:38:52,019 - src.pipeline.orchestrator - INFO - 
+================================================================================
+2026-01-11 18:38:52,053 - src.pipeline.orchestrator - INFO - 📊 Aggregating final pipeline status
+2026-01-11 18:38:52,089 - src.pipeline.orchestrator - INFO - ================================================================================     
+2026-01-11 18:38:52,141 - src.pipeline.orchestrator - INFO - 📊 Aggregating status for 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+2026-01-11 18:38:52,193 - src.pipeline.orchestrator - INFO - 🎉 All 5 nodes COMPLETED
+2026-01-11 18:38:52,232 - src.utils.monitoring_writer - INFO - 📊 Pipeline status written (SOURCE OF TRUTH): data\monitoring\nodes\5a09a8e3-5fa9-46bb-b871-acc4e572c183\pipeline_status.json
+2026-01-11 18:38:52,236 - src.utils.monitoring_writer - INFO - 🔌 Circuit breaker state written: data\monitoring\circuit_breaker_state.json       
+2026-01-11 18:38:52,236 - src.pipeline.orchestrator - INFO - 🎯 Pipeline 5a09a8e3-5fa9-46bb-b871-acc4e572c183 final status: crdb, cb_open: False)
+2026-01-11 18:38:52,602 - src.api.routes - WARNING - 🔌 Circuit breaker CLOSED for 5a09a8e3-5fa9-46bb-b871-acc4e572c183: None
+2026-01-11 18:38:52,648 - src.api.routes - INFO - 🎉 Pipeline COMPLETED: 5a09a8e3-5fa9-46bb-b871-acc4e572c183
+2026-01-11 18:38:52,715 - src.api.routes - INFO - 📡 POST /api/monitor/metrics - Fetching live metrics
+2026-01-11 18:38:52,768 - src.api.routes - INFO - ✅ Live metrics: total=1, completed=1, failed=0, processing=0
+2026-01-11 18:38:52,815 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json
+INFO:     127.0.0.1:60036 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:38:52,870 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:60038 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:40:04,593 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:40:04,707 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:40:04,777 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 50 logs
+INFO:     127.0.0.1:53103 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:40:06,870 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:53105 - "GET /api/health HTTP/1.1" 200 OK
+0
+2026-01-11 18:38:52,815 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json      
+INFO:     127.0.0.1:60036 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:38:52,870 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:60038 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:40:04,593 - src.api.routes - INFO - 📡 POST /api/monitor/logs - Fetching pipeline logs
+2026-01-11 18:40:04,707 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\logs.json
+2026-01-11 18:40:04,777 - src.api.routes - INFO - ✅ Pipeline logs retrieved: 50 logs
+INFO:     127.0.0.1:53103 - "POST /api/monitor/logs?limit=50 HTTP/1.1" 200 OK
+2026-01-11 18:40:06,870 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:53105 - "GET /api/health HTTP/1.1" 200 OK
+2026-01-11 18:40:09,021 - src.api.routes - INFO - 📡 POST /api/monitor/status - Fetching full system status   
+2026-01-11 18:40:09,160 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\status.json       
+2026-01-11 18:40:09,231 - src.api.routes - INFO - ✅ Full system status retrieved and persisted
+INFO:     127.0.0.1:53107 - "POST /api/monitor/status HTTP/1.1" 200 OK
+2026-01-11 18:40:11,374 - src.api.routes - INFO - 📡 POST /api/monitor/metrics - Fetching live metrics        
+2026-01-11 18:40:11,528 - src.api.routes - INFO - ✅ Live metrics: total=1, completed=1, failed=0, processing=0
+2026-01-11 18:40:11,638 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\metrics.json      
+INFO:     127.0.0.1:53109 - "POST /api/monitor/metrics HTTP/1.1" 200 OK
+2026-01-11 18:40:13,765 - src.api.routes - INFO - 📡 POST /api/monitor/health - Running system health check   
+2026-01-11 18:40:13,884 - src.api.routes - INFO - 📝 Wrote monitoring file: data\monitoring\health.json       
+2026-01-11 18:40:13,952 - src.api.routes - INFO - ✅ System health check completed and persisted
+INFO:     127.0.0.1:53111 - "POST /api/monitor/health HTTP/1.1" 200 OK
+2026-01-11 18:40:16,075 - src.api.routes - INFO - 📡 Health check called
+INFO:     127.0.0.1:53113 - "GET /api/health HTTP/1.1" 200 OK
